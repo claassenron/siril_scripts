@@ -55,10 +55,6 @@
 #   7. Option for creating only a master bias file
 #      and/or master dark file.
 #
-#   TODO:
-#       Adding options
-#       .........
-#
 #####################################################################
 
 import sirilpy as s
