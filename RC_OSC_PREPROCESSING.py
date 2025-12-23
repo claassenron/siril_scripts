@@ -8,7 +8,8 @@
 #
 #  RC OSC PREPROCESSING
 #
-#  Author: Ron Claassen <claassen.ron@home.nl>
+#  (c) Ron Claassen <claassen.ron@home.nl>
+#  SPDX-License-Identifier: GPL-3.0-or-later
 #
 #  This script is provided without any guarantee.
 #
@@ -58,6 +59,7 @@
 #####################################################################
 
 import sirilpy as s
+
 s.ensure_installed("PyQt6")
 
 import sys
@@ -148,11 +150,9 @@ def create_master_flat(self, object_path_var, process_temp_path, bias_master, ma
 class RcPreprocessingInterface(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.overwrite_checkbox_state = True
         
         self.setWindowTitle(f"{TITLE} - v{VERSION}")
         
-        #self.setWindowFlag(Qt.WindowType.Tool, True)
         self.resize(1100, 550)
       
         self.siril = s.SirilInterface()
@@ -833,3 +833,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
