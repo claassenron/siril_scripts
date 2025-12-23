@@ -1,4 +1,4 @@
-OSC PREPROCESSING SCRIPT FOR SIRIL 1.4.0 
+OSC PREPROCESSING SCRIPT FOR SIRIL 1.4.0
 
 <img width="1093" height="586" alt="osc" src="https://github.com/user-attachments/assets/25615fb9-3ddd-437b-9a47-cf9fcbfb648f" />
 
