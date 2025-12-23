@@ -9,7 +9,6 @@
 #  RC OSC PREPROCESSING
 #
 #  (c) Ron Claassen <claassen.ron@home.nl>
-#  SPDX-License-Identifier: GPL-3.0-or-later
 #
 #  This script is provided without any guarantee.
 #
@@ -833,4 +832,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
