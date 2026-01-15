@@ -245,7 +245,7 @@ class RcPreprocessingInterface(QMainWindow):
         container_child_1_layout.addWidget(process_group)
         
         # Bias group
-        bias_group = QGroupBox("Select Bias Path OR Master Dark File")
+        bias_group = QGroupBox("Select Bias Path OR Master Bias File")
         bias_layout = QVBoxLayout()
         bias_group.setLayout(bias_layout)
         
@@ -832,6 +832,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
