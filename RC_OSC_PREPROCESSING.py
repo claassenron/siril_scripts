@@ -465,8 +465,8 @@ class RcPreprocessingInterface(QMainWindow):
         button_layout.addWidget(close_button)
 
         submit_button = QPushButton("Apply")
-        #submit_button.clicked.connect(self.run_apply)
-        submit_button.clicked.connect(self.run_test)
+        submit_button.clicked.connect(self.run_apply)
+        #submit_button.clicked.connect(self.run_test)
         button_layout.addWidget(submit_button)
 
         layout.addLayout(button_layout)
