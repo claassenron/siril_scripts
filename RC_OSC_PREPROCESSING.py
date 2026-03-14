@@ -2,7 +2,7 @@
 #
 #  RC OSC PREPROCESSING v1.0.0
 #                                                                 
-#  Script for Siril 1.4.2                                      
+#  Script for Siril 1.4.2                                     
 #                                                                   
 #  December 2025
 #
