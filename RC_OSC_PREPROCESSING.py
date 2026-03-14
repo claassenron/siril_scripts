@@ -2,7 +2,7 @@
 #
 #  RC OSC PREPROCESSING v1.0.0
 #                                                                 
-#  Script for Siril 1.4.0                                      
+#  Script for Siril 1.4.2                                      
 #                                                                   
 #  December 2025
 #
@@ -110,7 +110,6 @@ all_lights_pattern = "all_lights"
 all_pp_lights_pattern = "all_pp_lights"
 batch_pp_lights_pattern = "batch_pp_lights_"
 batch_master_pattern = "batch_master"
-
 
 def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(bias_path_var))
