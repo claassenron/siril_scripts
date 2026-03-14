@@ -49,6 +49,7 @@
 #
 #   5. Option for setting the images bit dept for preprocessing.
 #       Master stack always saved in 32 bit.
+#
 #   6. Option for drizzle
 #
 #   7. Options for cleaning up processing folders.
