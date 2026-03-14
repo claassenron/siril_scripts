@@ -1,5 +1,6 @@
 OSC PREPROCESSING SCRIPT FOR SIRIL 1.4.2
 
+![This is a image](https://github.com/claassenron/siril_scripts/blob/ccbd699937caac52558435b870c141429a400fe5/rc_osc_preprocessing.jpg)
 
 THIS SCRIPT DOES NOT MOVE OR MAKES CHANGES TO ANY OF THE SOURCE FILES
 
