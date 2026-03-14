@@ -785,7 +785,7 @@ class RcPreprocessingInterface(QMainWindow):
                     self.siril.log("Creating all_pp_lights folder.", s.LogColor.GREEN)
                     all_pp_lights_temp_path.mkdir(exist_ok=True)
                     
-                    # Windows 2048 limit check    
+                    # Windows 2048 limit check   
                     pp_lights_count = sum(
                         1 for x in Path(process_temp_path).glob(pp_lights_pattern) 
                             if x.is_file()
