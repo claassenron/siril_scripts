@@ -49,10 +49,11 @@
 #
 #   5. Option for setting the images bit dept for preprocessing.
 #       Master stack always saved in 32 bit.
-#   
-#   6. Options for cleaning up processing folders.
+#   6. Option for drizzle
 #
-#   7. Option for creating only a master bias file
+#   7. Options for cleaning up processing folders.
+#
+#   8. Option for creating only a master bias file
 #      and/or master dark file.
 #
 #####################################################################
@@ -83,6 +84,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QFileDialog,
     QMessageBox,
+    QComboBox
 )
 
 TITLE = "RC OSC PREPROCESSING"
@@ -108,6 +110,7 @@ all_lights_pattern = "all_lights"
 all_pp_lights_pattern = "all_pp_lights"
 batch_pp_lights_pattern = "batch_pp_lights_"
 batch_master_pattern = "batch_master"
+
 
 def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(bias_path_var))
@@ -170,7 +173,7 @@ class RcPreprocessingInterface(QMainWindow):
         self.initUI()
             
     def initial_checks(self):
-        require_version = "1.4.0-beta3"
+        require_version = "1.4.2"
         try:
             self.siril.cmd("requires", require_version)
         except:
@@ -341,21 +344,51 @@ class RcPreprocessingInterface(QMainWindow):
         #container_layout.addWidget(container_child_2_group)
         container_layout.addLayout(container_child_2_layout)
         
-        # Clean up preprocessing
-        bit_dept_group = QGroupBox("Choose bit dept images mode")
+        # Set bit dept
+        bit_dept_group = QGroupBox("Choose bit dept preprocess mode")
         bit_dept_layout = QVBoxLayout()
         bit_dept_group.setLayout(bit_dept_layout)
         
-        # Set bit dept
+        # Checkbox set bit dept
+        self.bit_dept_16_var = QRadioButton("16 bit", self)
         self.bit_dept_32_var = QRadioButton("32 bit", self)
         self.bit_dept_32_var.setChecked(True)
         
-        self.bit_dept_16_var = QRadioButton("16 bit", self)
-        
-        bit_dept_layout.addWidget(self.bit_dept_32_var)
         bit_dept_layout.addWidget(self.bit_dept_16_var)
+        bit_dept_layout.addWidget(self.bit_dept_32_var)
         
         container_child_2_layout.addWidget(bit_dept_group)
+        
+        # Set drizzle
+        drizzle_group = QGroupBox("Drizzle")
+        drizzle_layout = QVBoxLayout()
+        drizzle_group.setLayout(drizzle_layout)
+        
+        # Checkbox set drizzle
+        self.drizzle_var = QCheckBox("Drizzle", self)
+        self.drizzle_var.setChecked(False)
+        
+        drizzle_scale_label = QLabel("Scale")
+        self.drizzle_scale_var = QComboBox()
+        self.drizzle_scale_var.addItems(["1.0", "1.5","2.0", "2.5", "3.0"])
+        
+        drizzle_pixfrac_label = QLabel("Pixel fraction")
+        self.drizzle_pixfrac_var = QComboBox()
+        self.drizzle_pixfrac_var.addItems(["0.5", "0.55", "0.6", "0.65", "0.7", "0.75", "0.8", "0.85", "0.9", "0.95", "1.0"])
+        
+        drizzle_kernel_label = QLabel("Kernel")
+        self.drizzle_kernel_var = QComboBox()
+        self.drizzle_kernel_var.addItems(["square", "point", "turbo", "gaussian", "Lanczos2", "Lanczos3"])
+        
+        drizzle_layout.addWidget(self.drizzle_var)
+        drizzle_layout.addWidget(drizzle_scale_label)
+        drizzle_layout.addWidget(self.drizzle_scale_var)
+        drizzle_layout.addWidget(drizzle_pixfrac_label)
+        drizzle_layout.addWidget(self.drizzle_pixfrac_var)
+        drizzle_layout.addWidget(drizzle_kernel_label)
+        drizzle_layout.addWidget(self.drizzle_kernel_var)
+        
+        container_child_2_layout.addWidget(drizzle_group)
         
         # Clean up preprocessing
         cleanup_group = QGroupBox("Cleanup during preprocessing")
@@ -432,8 +465,8 @@ class RcPreprocessingInterface(QMainWindow):
         button_layout.addWidget(close_button)
 
         submit_button = QPushButton("Apply")
-        submit_button.clicked.connect(self.run_apply)
-        #submit_button.clicked.connect(self.run_test)
+        #submit_button.clicked.connect(self.run_apply)
+        submit_button.clicked.connect(self.run_test)
         button_layout.addWidget(submit_button)
 
         layout.addLayout(button_layout)
@@ -491,8 +524,9 @@ class RcPreprocessingInterface(QMainWindow):
             "    If blank preprocessing without master dark.\n"
             "5. Option for setting the images bitdept for preprocessing.\n"
             "    Master stack always saved in 32 bit.\n"
-            "6. Options for cleaning up processing folders.\n"
-            "7. Option for creating only a master bias file\n"
+            "6. Option for drizzle.\n"
+            "7. Options for cleaning up processing folders.\n"
+            "8. Option for creating only a master bias file\n"
             "    and/or master dark file.\n"
         )
         QMessageBox.information(self, "Help", help_messagebox)
@@ -507,9 +541,17 @@ class RcPreprocessingInterface(QMainWindow):
         bias_path_var = self.bias_path_var.text()
         create_bias_var = self.create_bias_var.isChecked()
         create_dark_var = self.create_dark_var.isChecked()
-        bit_dept_16_var = self.bit_dept_16_var.isChecked()
+        bit_dept_32_var = self.bit_dept_32_var.isChecked()
         masters_path = Path(process_path_var).joinpath(masters_pattern)
         flats_path = Path(object_path_var).joinpath(flats_pattern)
+        drizzle_var = self.drizzle_var.isChecked()
+        drizzle_scale_var = self.drizzle_scale_var.currentText()
+        drizzle_pixfrac_var = self.drizzle_pixfrac_var.currentText()
+        drizzle_kernel_var = self.drizzle_kernel_var.currentText()
+        print (drizzle_var)
+        print (drizzle_scale_var)
+        print (drizzle_pixfrac_var)
+        print (drizzle_kernel_var)
         
     def run_apply(self):
         try:
@@ -528,11 +570,20 @@ class RcPreprocessingInterface(QMainWindow):
             flats_cleanup_var = self.flats_cleanup_var.isChecked()
             lights_cleanup_var = self.lights_cleanup_var.isChecked()
             bit_dept_32_var = self.bit_dept_32_var.isChecked()
+            drizzle_var = self.drizzle_var.isChecked()
+            drizzle_scale_var = self.drizzle_scale_var.currentText()
+            drizzle_pixfrac_var = self.drizzle_pixfrac_var.currentText()
+            drizzle_kernel_var = self.drizzle_kernel_var.currentText()
 
             if bit_dept_32_var == True:
                 set_bit_dept = "set32bits"
             else:
                 set_bit_dept = "set16bits"
+                
+            if drizzle_var == True:
+                master_stack = "$OBJECT:%s$_$STACKCNT:%d$x$EXPTIME:%d$sec_G$GAIN:%d$_O$OFFSET:%d$_T$CCD-TEMP:%d$°C_$DATE-OBS:dm12$_drizzle"
+            else:
+                master_stack = "$OBJECT:%s$_$STACKCNT:%d$x$EXPTIME:%d$sec_G$GAIN:%d$_O$OFFSET:%d$_T$CCD-TEMP:%d$°C_$DATE-OBS:dm12$"
             
             # Check if paths are selected
             if create_bias_var == True or create_dark_var == True:
@@ -709,14 +760,19 @@ class RcPreprocessingInterface(QMainWindow):
                     else:
                         self.siril.log(f"Calibrate with: Master Dark and Master Flat", s.LogColor.GREEN)
                         lights_calibration = f"-dark={dark_master}"
-                      
+                        
+                    if drizzle_var == True:
+                        debayer = ""
+                    else:
+                        debayer = "-debayer"
+                        
                     object_array = Path(object_path_var).iterdir()  
                     i = 1
                     for object in object_array:        
                         self.siril.cmd("cd", f"{object.joinpath(lights_pattern)}")
                         self.siril.cmd("convert", f"light_s{i} -out={process_temp_path}")
                         self.siril.cmd("cd", f"{process_temp_path}")
-                        self.siril.cmd("calibrate", f"light_s{i} {lights_calibration} -flat={masters_path}/pp_flat_s{i}_stacked -cfa -equalize_cfa -debayer")
+                        self.siril.cmd("calibrate", f"light_s{i} {lights_calibration} -flat={masters_path}/pp_flat_s{i}_stacked -cfa -equalize_cfa {debayer}")
                         i += 1
                         
                     if lights_cleanup_var == True:
@@ -729,7 +785,7 @@ class RcPreprocessingInterface(QMainWindow):
                     self.siril.log("Creating all_pp_lights folder.", s.LogColor.GREEN)
                     all_pp_lights_temp_path.mkdir(exist_ok=True)
                     
-                    # Windows 2048 limit check
+                    # Windows 2048 limit check    
                     pp_lights_count = sum(
                         1 for x in Path(process_temp_path).glob(pp_lights_pattern) 
                             if x.is_file()
@@ -748,13 +804,15 @@ class RcPreprocessingInterface(QMainWindow):
                         # CREATE MASTER STACK
                         self.siril.log("Creating master_stack", s.LogColor.GREEN)
                         
-                        self.siril.cmd("cd", all_pp_lights_temp_path)
+                        self.siril.cmd("cd", f"{all_pp_lights_temp_path}")
                         self.siril.cmd("convert", f"all_light -out={process_temp_path}")
-                        self.siril.cmd("cd", process_temp_path)
+                        self.siril.cmd("cd", f"{process_temp_path}")
                         self.siril.cmd("register", "all_light")
-                        self.siril.cmd("stack", f"r_all_light rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={masters_path}/$OBJECT:%s$_$STACKCNT:%d$x$EXPTIME:%d$sec_G$GAIN:%d$_O$OFFSET:%d$_T$CCD-TEMP:%d$°C_$DATE-OBS:dm12$")
+                        if drizzle_var == True:
+                            self.siril.cmd("seqapplyreg", f"all_light -drizzle -scale={drizzle_scale_var} -pixfrac={drizzle_pixfrac_var} -kernel={drizzle_kernel_var}")    
+                        self.siril.cmd("stack", f"r_all_light rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={masters_path}/{master_stack}")
                         
-                        self.siril.cmd("cd", masters_path)
+                        self.siril.cmd("cd", f"{masters_path}")
                         
                         self.siril.log("FINISHED OSC PREPROCESSING.", s.LogColor.GREEN)
                         
@@ -788,17 +846,21 @@ class RcPreprocessingInterface(QMainWindow):
                         for all_pp_lights in all_pp_lights_array:
                             self.siril.log(f"Batch: {all_pp_lights}", s.LogColor.GREEN)
                             self.siril.cmd("cd", all_pp_lights)
-                            self.siril.cmd("convert", f"light_all_{i} -out={process_temp_path}")
+                            self.siril.cmd("convert", f"all_light_{i} -out={process_temp_path}")
                             self.siril.cmd("cd", process_temp_path)
-                            self.siril.cmd("register", f"light_all_{i}")
-                            self.siril.cmd("stack", f"r_light_all_{i} rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={batch_temp_path}/batch_light_all_{i}")
+                            self.siril.cmd("register", f"all_light_{i}")
+                            if drizzle_var == True:
+                                self.siril.cmd("seqapplyreg", f"all_light_{i} -drizzle -scale={drizzle_scale_var} -pixfrac={drizzle_pixfrac_var} -kernel={drizzle_kernel_var}")    
+                            self.siril.cmd("stack", f"r_all_light_{i} rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={batch_temp_path}/batch_light_all_{i}")
                             i += 1
                             
                         self.siril.cmd("cd", batch_temp_path)
-                        self.siril.cmd("convert", f"batch_light_all -out={process_temp_path}")
+                        self.siril.cmd("convert", f"batch_all_light -out={process_temp_path}")
                         self.siril.cmd("cd", process_temp_path)
-                        self.siril.cmd("register", f"batch_light_all")
-                        self.siril.cmd("stack", f"r_batch_light_all rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={masters_path}/$OBJECT:%s$_$STACKCNT:%d$x$EXPTIME:%d$sec_G$GAIN:%d$_O$OFFSET:%d$_T$CCD-TEMP:%d$°C_$DATE-OBS:dm12$")
+                        #self.siril.cmd("register", f"batch_all_light")
+                        self.siril.cmd("seqplatesolve", f"batch_all_light")
+                        self.siril.cmd("seqapplyreg", f"batch_all_light")
+                        self.siril.cmd("stack", f"r_batch_all_light rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={masters_path}/{master_stack}")
                         
                         self.siril.cmd("cd", masters_path)
                         
