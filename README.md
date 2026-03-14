@@ -44,6 +44,8 @@ If blank, preprocessing without master dark.
 5. Option for setting the images bit dept for preprocessing.
 Master stack always saved in 32 bit.
 
-6. Options for cleaning up processing folders.
+6. Option for drizzle
 
-7. Option for creating only a master bias file and/or master dark file.
+7. Options for cleaning up processing folders.
+
+8. Option for creating only a master bias file and/or master dark file.
