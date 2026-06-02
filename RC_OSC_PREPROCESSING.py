@@ -112,6 +112,12 @@ all_pp_lights_pattern = "all_pp_lights"
 batch_pp_lights_pattern = "batch_pp_lights_"
 batch_master_pattern = "batch_master"
 
+def get_session_paths(object_path_var):
+    return sorted(
+        (path for path in Path(object_path_var).iterdir() if path.is_dir()),
+        key=lambda path: path.name.lower()
+    )
+
 def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(bias_path_var))
     self.siril.cmd("convert", f"bias -out={process_temp_path}")
@@ -133,7 +139,7 @@ def create_master_dark(self, dark_path_var, process_temp_path, masters_path):
     self.siril.log(f"FINISHED CREATING MASTER DARK. ({masters_path}/{dark_master_pattern})", s.LogColor.GREEN)
     
 def create_master_flat(self, object_path_var, process_temp_path, bias_master, masters_path):
-    object_array = Path(object_path_var).iterdir()                
+    object_array = get_session_paths(object_path_var)
     i = 1
     for object in object_array:
         self.siril.cmd("cd", f"{object}/{flats_pattern}")
@@ -587,18 +593,18 @@ class RcPreprocessingInterface(QMainWindow):
             
             # Check if paths are selected
             if create_bias_var == True or create_dark_var == True:
-                if (process_path_var in (None, "") or not Path(process_path_var).is_dir()) or (create_bias_var == True and bias_path_var in (None, "") or not Path(bias_path_var).is_dir()) or (create_dark_var == True and dark_path_var in (None, "") or not Path(dark_path_var).is_dir()):
+                if (process_path_var in (None, "") or not Path(process_path_var).is_dir()) or (create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir())) or (create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir())):
                     if (process_path_var in (None, "") or not Path(process_path_var).is_dir()):
                         self.siril.log(
                             "Select process folder.",
                             s.LogColor.SALMON
                         )
-                    if create_bias_var == True and bias_path_var in (None, "") or not Path(bias_path_var).is_dir():
+                    if create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir()):
                         self.siril.log(
                             "Select bias folder.",
                             s.LogColor.SALMON
                         )         
-                    if create_dark_var == True and dark_path_var in (None, "") or not Path(dark_path_var).is_dir():
+                    if create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir()):
                         self.siril.log(
                             "Select darks folder.",
                             s.LogColor.SALMON
@@ -699,7 +705,8 @@ class RcPreprocessingInterface(QMainWindow):
                     all_pp_lights_temp_path = Path(process_path_var).joinpath(all_pp_lights_pattern)
                     all_batch_pp_lights_temp_path = Path(all_pp_lights_temp_path).joinpath(batch_pp_lights_pattern)
                     batch_temp_path = masters_path.joinpath(batch_master_pattern)
-                    
+                    batch_temp_path.mkdir(exist_ok=True)
+                          
                     # Check for bias / dark
                     if Path(bias_file_var).is_file():
                         bias_master = Path(bias_file_var)
@@ -754,7 +761,7 @@ class RcPreprocessingInterface(QMainWindow):
                     if bias_master == "" and dark_master == "":
                         self.siril.log(f"Calibrate with: Only Master Flat", s.LogColor.GREEN) 
                         lights_calibration = ""
-                    elif bias_master != "":
+                    elif bias_master != "" and dark_master == "":
                         self.siril.log(f"Calibrate with: Master Bias and Master Flat", s.LogColor.GREEN)
                         lights_calibration = f"-bias={bias_master}"
                     else:
@@ -766,7 +773,7 @@ class RcPreprocessingInterface(QMainWindow):
                     else:
                         debayer = "-debayer"
                         
-                    object_array = Path(object_path_var).iterdir()  
+                    object_array = get_session_paths(object_path_var)
                     i = 1
                     for object in object_array:        
                         self.siril.cmd("cd", f"{object.joinpath(lights_pattern)}")
