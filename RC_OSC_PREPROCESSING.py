@@ -92,7 +92,7 @@ TITLE = "RC OSC PREPROCESSING"
 VERSION = "1.0.0"
 AUTHOR = "Ron Claassen"
 
-LIGHTS_COUNT = 2000 # MAX 2048 ON WINDOWS OS
+LIGHTS_COUNT = 30 # MAX 2048 ON WINDOWS OS
 
 flats_pattern = "flats"
 lights_pattern= "lights"
@@ -705,7 +705,7 @@ class RcPreprocessingInterface(QMainWindow):
                     all_pp_lights_temp_path = Path(process_path_var).joinpath(all_pp_lights_pattern)
                     all_batch_pp_lights_temp_path = Path(all_pp_lights_temp_path).joinpath(batch_pp_lights_pattern)
                     batch_temp_path = masters_path.joinpath(batch_master_pattern)
-                    batch_temp_path.mkdir(exist_ok=True)
+                    
                           
                     # Check for bias / dark
                     if Path(bias_file_var).is_file():
@@ -826,6 +826,7 @@ class RcPreprocessingInterface(QMainWindow):
                         self.siril.cmd("set32bits")
                     else:
                         # Create batch folders
+                        batch_temp_path.mkdir(exist_ok=True)
                         self.siril.log(f"Count is more then {LIGHTS_COUNT}", s.LogColor.GREEN)
                         self.siril.log(f"Total count is: {pp_lights_count} light frames", s.LogColor.GREEN)
                         
