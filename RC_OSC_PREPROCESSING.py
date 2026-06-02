@@ -92,7 +92,126 @@ TITLE = "RC OSC PREPROCESSING"
 VERSION = "1.0.0"
 AUTHOR = "Ron Claassen"
 
-LIGHTS_COUNT = 30 # MAX 2048 ON WINDOWS OS
+LIGHTS_COUNT = 2000 # MAX 2048 ON WINDOWS OS
+
+DARK_THEME_STYLESHEET = """
+QMainWindow,
+QWidget {
+    background-color: #15171c;
+    color: #e6e8ee;
+    font-size: 10pt;
+}
+
+QLabel {
+    color: #d8dce6;
+}
+
+QLabel#titleLabel {
+    color: #f4f6fb;
+    font-size: 15pt;
+    font-weight: 600;
+    padding: 10px 0 14px 0;
+}
+
+QGroupBox {
+    background-color: #1d2027;
+    border: 1px solid #363b46;
+    border-radius: 6px;
+    margin-top: 14px;
+    padding: 12px 10px 10px 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    color: #9db8ff;
+    padding: 0 6px;
+    left: 10px;
+}
+
+QLineEdit,
+QComboBox {
+    background-color: #101217;
+    border: 1px solid #3a404c;
+    border-radius: 4px;
+    color: #f0f2f7;
+    min-height: 26px;
+    padding: 3px 8px;
+    selection-background-color: #4268d6;
+}
+
+QLineEdit:focus,
+QComboBox:focus {
+    border-color: #6f8fff;
+}
+
+QComboBox::drop-down {
+    border: 0;
+    width: 24px;
+}
+
+QPushButton {
+    background-color: #2a2f3a;
+    border: 1px solid #424958;
+    border-radius: 4px;
+    color: #f4f6fb;
+    min-height: 28px;
+    min-width: 78px;
+    padding: 4px 12px;
+}
+
+QPushButton:hover {
+    background-color: #343a47;
+    border-color: #5a6375;
+}
+
+QPushButton:pressed {
+    background-color: #20242d;
+}
+
+QPushButton#applyButton {
+    background-color: #3b63d7;
+    border-color: #6788ee;
+    font-weight: 600;
+}
+
+QPushButton#applyButton:hover {
+    background-color: #456fe9;
+}
+
+QRadioButton,
+QCheckBox {
+    color: #e6e8ee;
+    spacing: 8px;
+    min-height: 22px;
+}
+
+QRadioButton::indicator,
+QCheckBox::indicator {
+    background-color: #101217;
+    border: 1px solid #4c5362;
+    height: 14px;
+    width: 14px;
+}
+
+QRadioButton::indicator {
+    border-radius: 8px;
+}
+
+QCheckBox::indicator {
+    border-radius: 3px;
+}
+
+QRadioButton::indicator:checked,
+QCheckBox::indicator:checked {
+    background-color: #6f8fff;
+    border-color: #9db8ff;
+}
+
+QMessageBox {
+    background-color: #1d2027;
+}
+"""
 
 flats_pattern = "flats"
 lights_pattern= "lights"
@@ -160,6 +279,7 @@ class RcPreprocessingInterface(QMainWindow):
         super().__init__()
         
         self.setWindowTitle(f"{TITLE} - v{VERSION}")
+        self.setStyleSheet(DARK_THEME_STYLESHEET)
         
         self.resize(1100, 550)
       
@@ -198,6 +318,7 @@ class RcPreprocessingInterface(QMainWindow):
 
         # 1 Title
         title_label = QLabel(f"{TITLE} - v{VERSION}")
+        title_label.setObjectName("titleLabel")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title_label)
         
@@ -471,6 +592,7 @@ class RcPreprocessingInterface(QMainWindow):
         button_layout.addWidget(close_button)
 
         submit_button = QPushButton("Apply")
+        submit_button.setObjectName("applyButton")
         submit_button.clicked.connect(self.run_apply)
         #submit_button.clicked.connect(self.run_test)
         button_layout.addWidget(submit_button)
