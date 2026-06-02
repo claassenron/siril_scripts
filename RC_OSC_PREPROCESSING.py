@@ -213,6 +213,8 @@ QMessageBox {
 }
 """
 
+biases_pattern = "biases"
+darks_pattern = "darks"
 flats_pattern = "flats"
 lights_pattern= "lights"
 session_flats_pattern = "flats_s*"
@@ -246,7 +248,25 @@ def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     )
     self.siril.cmd("cd", masters_path)
     self.siril.log(f"FINISHED CREATING MASTER BIAS. ({masters_path}/{bias_master_pattern})", s.LogColor.GREEN)
-        
+
+def create_session_master_bias(self, object_path_var, process_temp_path, masters_path):
+    object_array = get_session_paths(object_path_var)
+    bias_masters = []
+    i = 1
+    for object in object_array:
+        bias_master = Path(masters_path).joinpath(f"{bias_master_pattern}_{i}")
+        self.siril.cmd("cd", f"{object}/{biases_pattern}")
+        self.siril.cmd("convert", f"bias_s{i} -out={process_temp_path}")
+        self.siril.cmd("cd", process_temp_path)
+        self.siril.cmd(
+            "stack", f"bias_s{i} rej 3 3 -nonorm -32b -out={bias_master}"
+        )
+        self.siril.cmd("cd", masters_path)
+        self.siril.log(f"FINISHED CREATING MASTER BIAS. ({bias_master})", s.LogColor.GREEN)
+        bias_masters.append(bias_master)
+        i += 1  
+    return bias_masters
+       
 def create_master_dark(self, dark_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(dark_path_var))
     self.siril.cmd("convert", f"dark -out={process_temp_path}")
@@ -256,17 +276,36 @@ def create_master_dark(self, dark_path_var, process_temp_path, masters_path):
     )
     self.siril.cmd("cd", masters_path)
     self.siril.log(f"FINISHED CREATING MASTER DARK. ({masters_path}/{dark_master_pattern})", s.LogColor.GREEN)
+
+def create_session_master_dark(self, object_path_var, process_temp_path, masters_path):
+    object_array = get_session_paths(object_path_var)
+    dark_masters = []
+    i = 1
+    for object in object_array:
+        dark_master = Path(masters_path).joinpath(f"{dark_master_pattern}_{i}")
+        self.siril.cmd("cd", f"{object}/{darks_pattern}")
+        self.siril.cmd("convert", f"dark_s{i} -out={process_temp_path}")
+        self.siril.cmd("cd", process_temp_path)
+        self.siril.cmd(
+            "stack", f"dark_s{i} rej 3 3 -nonorm -32b -out={dark_master}"
+        )
+        self.siril.cmd("cd", masters_path)
+        self.siril.log(f"FINISHED CREATING MASTER DARK. ({dark_master})", s.LogColor.GREEN)
+        dark_masters.append(dark_master)
+        i += 1  
+    return dark_masters
     
 def create_master_flat(self, object_path_var, process_temp_path, bias_master, masters_path):
     object_array = get_session_paths(object_path_var)
     i = 1
     for object in object_array:
+        session_bias_master = bias_master[i - 1] if isinstance(bias_master, list) else bias_master
         self.siril.cmd("cd", f"{object}/{flats_pattern}")
         self.siril.cmd("convert", f"flat_s{i} -out={process_temp_path}")
         self.siril.cmd("cd", f"{process_temp_path}")
-        if bias_master != "":
-            self.siril.log(f"Calibrate with: Master Bias: {bias_master}", s.LogColor.GREEN)
-            self.siril.cmd("calibrate", f"flat_s{i} -bias={bias_master}")
+        if session_bias_master != "":
+            self.siril.log(f"Calibrate with: Master Bias: {session_bias_master}", s.LogColor.GREEN)
+            self.siril.cmd("calibrate", f"flat_s{i} -bias={session_bias_master}")
             self.siril.cmd("stack", f"pp_flat_s{i} rej 3 3 -norm=mul -32b -out={masters_path}/pp_flat_s{i}_stacked")
         else:
             self.siril.log(f"No Calibration (No Master Bias)", s.LogColor.GREEN)
@@ -375,9 +414,15 @@ class RcPreprocessingInterface(QMainWindow):
         container_child_1_layout.addWidget(process_group)
         
         # Bias group
-        bias_group = QGroupBox("Select Bias Path OR Master Bias File")
+        bias_group = QGroupBox("Select Bias session files OR Bias Path OR Master Bias File")
         bias_layout = QVBoxLayout()
         bias_group.setLayout(bias_layout)
+        
+        # Bias session files
+        self.bias_session_var = QCheckBox("Use bias session files (biases folder in each session)", self)
+        self.bias_session_var.setChecked(False)
+        
+        bias_layout.addWidget(self.bias_session_var)
         
         # Bias path group
         bias_path_group = QGroupBox()
@@ -420,9 +465,15 @@ class RcPreprocessingInterface(QMainWindow):
         container_child_1_layout.addWidget(bias_group)
 
         # Dark group
-        dark_group = QGroupBox("Select Dark Path OR Master Dark File")
+        dark_group = QGroupBox("Select Dark session files OR Dark Path OR Master Dark File")
         dark_layout = QVBoxLayout()
         dark_group.setLayout(dark_layout)
+        
+        # Dark session files
+        self.dark_session_var = QCheckBox("Use dark session files (darks folder in each session)", self)
+        self.dark_session_var.setChecked(False)
+        
+        dark_layout.addWidget(self.dark_session_var)
         
         # Dark path group
         dark_path_group = QGroupBox()
@@ -685,8 +736,10 @@ class RcPreprocessingInterface(QMainWindow):
         try:
             object_path_var = self.object_path_var.text()
             process_path_var = self.process_path_var.text()
+            bias_session_var = self.bias_session_var.isChecked()
             bias_path_var = self.bias_path_var.text()
             bias_file_var = self.bias_file_var.text()
+            dark_session_var = self.dark_session_var.isChecked()
             dark_path_var = self.dark_path_var.text()
             dark_file_var = self.dark_file_var.text()
             process_cleanup_var = self.process_cleanup_var.isChecked()
@@ -767,12 +820,12 @@ class RcPreprocessingInterface(QMainWindow):
                         "Select process folder.",
                         s.LogColor.SALMON
                     )
-                if bias_path_var not in (None, "") and bias_file_var not in (None, ""):
+                if (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True):
                     self.siril.log(
-                        "Both selected! Select bias folder or master bias file or none.",
+                        "Multiple selected! Select bias folder or master bias file or none.",
                         s.LogColor.SALMON
                     )
-                if dark_path_var not in (None, "") and dark_file_var not in (None, ""):
+                if (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
                     self.siril.log(
                         "Both selected! Select dark folder or master dark file or none.",
                         s.LogColor.SALMON
@@ -830,7 +883,9 @@ class RcPreprocessingInterface(QMainWindow):
                     
                           
                     # Check for bias / dark
-                    if Path(bias_file_var).is_file():
+                    if bias_session_var == True:
+                        bias_master = create_session_master_bias(self, object_path_var, process_temp_path, masters_path)
+                    elif Path(bias_file_var).is_file():
                         bias_master = Path(bias_file_var)
                         self.siril.log(
                         f"Use Master Bias - {bias_master}",
@@ -851,8 +906,9 @@ class RcPreprocessingInterface(QMainWindow):
                                 Path(path).unlink()
                                 print(f"Deleting: {path}")
 
-
-                    if Path(dark_file_var).is_file():
+                    if dark_session_var == True:
+                        dark_master = create_session_master_dark(self, object_path_var, process_temp_path, masters_path)
+                    elif Path(dark_file_var).is_file():
                         dark_master = Path(dark_file_var)
                         self.siril.log(
                         f"Use Master Dark. - {dark_master}",
@@ -880,16 +936,6 @@ class RcPreprocessingInterface(QMainWindow):
                             Path(path).unlink()
                             
                     # Preprocessing light frames                        
-                    if bias_master == "" and dark_master == "":
-                        self.siril.log(f"Calibrate with: Only Master Flat", s.LogColor.GREEN) 
-                        lights_calibration = ""
-                    elif bias_master != "" and dark_master == "":
-                        self.siril.log(f"Calibrate with: Master Bias and Master Flat", s.LogColor.GREEN)
-                        lights_calibration = f"-bias={bias_master}"
-                    else:
-                        self.siril.log(f"Calibrate with: Master Dark and Master Flat", s.LogColor.GREEN)
-                        lights_calibration = f"-dark={dark_master}"
-                        
                     if drizzle_var == True:
                         debayer = ""
                     else:
@@ -898,6 +944,19 @@ class RcPreprocessingInterface(QMainWindow):
                     object_array = get_session_paths(object_path_var)
                     i = 1
                     for object in object_array:        
+                        session_bias_master = bias_master[i - 1] if isinstance(bias_master, list) else bias_master
+                        session_dark_master = dark_master[i - 1] if isinstance(dark_master, list) else dark_master
+                        
+                        if session_bias_master == "" and session_dark_master == "":
+                            self.siril.log(f"Calibrate session {i} with: Only Master Flat", s.LogColor.GREEN)
+                            lights_calibration = ""
+                        elif session_bias_master != "" and session_dark_master == "":
+                            self.siril.log(f"Calibrate session {i} with: Master Bias and Master Flat", s.LogColor.GREEN)
+                            lights_calibration = f"-bias={session_bias_master}"
+                        else:
+                            self.siril.log(f"Calibrate session {i} with: Master Dark and Master Flat", s.LogColor.GREEN)
+                            lights_calibration = f"-dark={session_dark_master}"
+                        
                         self.siril.cmd("cd", f"{object.joinpath(lights_pattern)}")
                         self.siril.cmd("convert", f"light_s{i} -out={process_temp_path}")
                         self.siril.cmd("cd", f"{process_temp_path}")
