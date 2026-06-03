@@ -24,8 +24,12 @@
 #     Folder structure:
 #     ../object_folder/session_folder1/flats/
 #                     /session_folder1/lights/
+#                     /session_folder2/biases/ (optional)
+#                     /session_folder2/darks/ (optional)
 #                     /session_folder2/flats/
 #                     /session_folder2/lights/
+#                     /session_folder2/biases/ (optional)
+#                     /session_folder2/darks/ (optional)
 #
 #     Folder structure example:
 #     ../NGC7380/2025-08-08/flats/
@@ -690,16 +694,22 @@ class RcPreprocessingInterface(QMainWindow):
             "    Folder structure:\n"
             "    ../object_folder/session_folder1/flats/\n"
             "                             /session_folder1/lights/\n"
+            "                             /session_folder1/biases/ (optional)\n"
+            "                             /session_folder1/darks/ (optional)\n"
             "                             /session_folder2/flats/\n"
-            "                             /session_folder2/lights/\n\n"
+            "                             /session_folder2/lights/\n"
+            "                             /session_folder2/biases/ (optional)\n"
+            "                             /session_folder2/darks/ (optional)\n\n"
             "2. Choose folder for processing.\n"
             "    The script creates here a /process, /masters\n"
             "    and /all_lights folder.\n"
             "    If more then 2000 lights on windows the script will\n"
             "    create batch folders of max 2000 files\n"
-            "3. Choose bias files folder or master bias file.\n"
+            "3. Choose in session biases folder or choose separately\n"
+            "    a bias files folder or master bias file.\n"
             "    If blank preprocessing without master bias.\n"
-            "4. Choose dark files folder or master dark file.\n"
+            "4. Choose in session darks folder or choose seperately\n"
+            "    a dark files folder or master dark file.\n"
             "    If blank preprocessing without master dark.\n"
             "5. Option for setting the images bitdept for preprocessing.\n"
             "    Master stack always saved in 32 bit.\n"
@@ -809,7 +819,7 @@ class RcPreprocessingInterface(QMainWindow):
                         )
                         
             # Check if paths are selected           
-            elif ((object_path_var in (None, "") or not Path(object_path_var).is_dir()) or (process_path_var in (None, "") or not Path(process_path_var).is_dir())) or (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (not Path(bias_file_var).exists() or not Path(dark_file_var).exists()):
+            elif ((object_path_var in (None, "") or not Path(object_path_var).is_dir()) or (process_path_var in (None, "") or not Path(process_path_var).is_dir())) or (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (not Path(bias_file_var).exists() or not Path(dark_file_var).exists())or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True)or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
                 if object_path_var in (None, "") or not Path(object_path_var).is_dir():
                     self.siril.log(
                         "Select object folder.",
@@ -827,7 +837,7 @@ class RcPreprocessingInterface(QMainWindow):
                     )
                 if (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
                     self.siril.log(
-                        "Both selected! Select dark folder or master dark file or none.",
+                        "Multiple selected! Select dark folder or master dark file or none.",
                         s.LogColor.SALMON
                     )
                 if not Path(bias_file_var).exists():

@@ -12,10 +12,18 @@ MULTI SESSION PREPROCESSING IS POSSIBLE.
    ../object_folder/session_folder1/flats/
 
    ............................./session_folder1/lights/
+
+   ............................./session_folder1/biases/ (optional)
+
+   ............................./session_folder1/darks/ (optional)
    
    ............................./session_folder2/flats/
    
    ............................./session_folder2/lights/
+
+   ............................./session_folder2/biases/ (optional)
+
+   ............................./session_folder2/darks/ (optional)
 
     Folder structure example:
 
@@ -35,10 +43,10 @@ MULTI SESSION PREPROCESSING IS POSSIBLE.
 The script creates here a /process, /masters and /all_lights folder.
 If more then 2000 lights on Windows OS the script will create batch folders of max 2000 files.
 
-3. Choose bias files folder or master bias file.
+3. Choose in session biases folder or choose separately a bias files folder or master bias file.
 If blank, preprocessing without master bias.
 
-4. Choose dark files folder or master dark file.
+4. Choose in session darks folder or choose seperately a dark files folder or master dark file.
 If blank, preprocessing without master dark.
 
 5. Option for setting the images bit dept for preprocessing.
