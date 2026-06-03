@@ -45,10 +45,12 @@
 #       If more then 2000 lights on Windows OS the script will
 #       create batch folders of max 2000 files.
 #
-#   3. Choose bias files folder or master bias file.
-#       If blank, preprocessing without master biase.
+#   3. Choose in session biases folder or choose separately a 
+#       bias files folder or master bias file.
+#       If blank, preprocessing without master bias.
 #
-#   4. Choose dark files folder or master dark file.
+#   4. Choose in session darks folder or choose separately a
+#       dark files folder or master dark file.
 #       If blank, preprocessing without master dark.
 #
 #   5. Option for setting the images bit dept for preprocessing.
