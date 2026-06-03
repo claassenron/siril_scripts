@@ -22,11 +22,11 @@
 #   1. Choose Object folder.
 #
 #     Folder structure:
-#     ../object_folder/session_folder1/flats/
+#     ../object_folder/session_folder1/flats/ (optional with No Flats)
 #                     /session_folder1/lights/
 #                     /session_folder2/biases/ (optional)
 #                     /session_folder2/darks/ (optional)
-#                     /session_folder2/flats/
+#                     /session_folder2/flats/ (optional with No Flats)
 #                     /session_folder2/lights/
 #                     /session_folder2/biases/ (optional)
 #                     /session_folder2/darks/ (optional)
@@ -53,14 +53,16 @@
 #       dark files folder or master dark file.
 #       If blank, preprocessing without master dark.
 #
-#   5. Option for setting the images bit dept for preprocessing.
+#   5. Option for preprocessing without flats.
+#
+#   6. Option for setting the images bit dept for preprocessing.
 #       Master stack always saved in 32 bit.
 #
-#   6. Option for drizzle
+#   7. Option for drizzle
 #
-#   7. Options for cleaning up processing folders.
+#   8. Options for cleaning up processing folders.
 #
-#   8. Option for creating only a master bias file
+#   9. Option for creating only a master bias file
 #      and/or master dark file.
 #
 #####################################################################
@@ -518,8 +520,20 @@ class RcPreprocessingInterface(QMainWindow):
         dark_file_layout.addWidget(dark_file_button)
         
         dark_layout.addWidget(dark_file_group)
-        
+
         container_child_1_layout.addWidget(dark_group)
+
+        # Flat group
+        flat_group = QGroupBox("Flats")
+        flat_layout = QVBoxLayout()
+        flat_group.setLayout(flat_layout)
+
+        self.no_flats_var = QCheckBox("No flats", self)
+        self.no_flats_var.setChecked(False)
+
+        flat_layout.addWidget(self.no_flats_var)
+
+        container_child_1_layout.addWidget(flat_group)
         
         # 2 container_v
         #container_child_2_group = QGroupBox()
@@ -694,11 +708,11 @@ class RcPreprocessingInterface(QMainWindow):
             "TO ANY OF THE SOURCE FILES\n\n"
             "1. Choose Object folder.\n\n"
             "    Folder structure:\n"
-            "    ../object_folder/session_folder1/flats/\n"
+            "    ../object_folder/session_folder1/flats/ (optional with No Flats)\n"
             "                             /session_folder1/lights/\n"
             "                             /session_folder1/biases/ (optional)\n"
             "                             /session_folder1/darks/ (optional)\n"
-            "                             /session_folder2/flats/\n"
+            "                             /session_folder2/flats/ (optional with No Flats)\n"
             "                             /session_folder2/lights/\n"
             "                             /session_folder2/biases/ (optional)\n"
             "                             /session_folder2/darks/ (optional)\n\n"
@@ -713,11 +727,12 @@ class RcPreprocessingInterface(QMainWindow):
             "4. Choose in session darks folder or choose seperately\n"
             "    a dark files folder or master dark file.\n"
             "    If blank preprocessing without master dark.\n"
-            "5. Option for setting the images bitdept for preprocessing.\n"
+            "5. Option for preprocessing without flats.\n"
+            "6. Option for setting the images bitdept for preprocessing.\n"
             "    Master stack always saved in 32 bit.\n"
-            "6. Option for drizzle.\n"
-            "7. Options for cleaning up processing folders.\n"
-            "8. Option for creating only a master bias file\n"
+            "7. Option for drizzle.\n"
+            "8. Options for cleaning up processing folders.\n"
+            "9. Option for creating only a master bias file\n"
             "    and/or master dark file.\n"
         )
         QMessageBox.information(self, "Help", help_messagebox)
@@ -754,6 +769,7 @@ class RcPreprocessingInterface(QMainWindow):
             dark_session_var = self.dark_session_var.isChecked()
             dark_path_var = self.dark_path_var.text()
             dark_file_var = self.dark_file_var.text()
+            no_flats_var = self.no_flats_var.isChecked()
             process_cleanup_var = self.process_cleanup_var.isChecked()
             all_pp_lights_cleanup_var = self.all_pp_lights_cleanup_var.isChecked()
             create_bias_var = self.create_bias_var.isChecked()
@@ -853,18 +869,19 @@ class RcPreprocessingInterface(QMainWindow):
                         s.LogColor.SALMON
                         )    
             else: 
-                # Check if flats / lights path / files exists       
+                # Check if flats / lights path / files exists
                 for object in sorted(Path(object_path_var).glob("*")):
-                    if not Path(object.joinpath(flats_pattern)).exists():
-                        self.siril.log(f"No flats folder in: {Path(object)}",
-                        s.LogColor.RED
-                        )
-                        break
-                    if not any(Path(object.joinpath(flats_pattern)).iterdir()):
-                        self.siril.log(f"File path empty: {Path(object.joinpath(flats_pattern))}",
-                        s.LogColor.RED
-                        )
-                        break
+                    if no_flats_var == False:
+                        if not Path(object.joinpath(flats_pattern)).exists():
+                            self.siril.log(f"No flats folder in: {Path(object)}",
+                            s.LogColor.RED
+                            )
+                            break
+                        if not any(Path(object.joinpath(flats_pattern)).iterdir()):
+                            self.siril.log(f"File path empty: {Path(object.joinpath(flats_pattern))}",
+                            s.LogColor.RED
+                            )
+                            break
                     if not Path(object.joinpath(lights_pattern)).exists():
                         self.siril.log(f"No lights folder in: {Path(object)}",
                         s.LogColor.RED
@@ -941,11 +958,14 @@ class RcPreprocessingInterface(QMainWindow):
                                 Path(path).unlink()
             
                     # Create flats stack
-                    create_master_flat(self, object_path_var, process_temp_path, bias_master, masters_path)
-                        
-                    if flats_cleanup_var == True:
-                        for path in Path(process_temp_path).rglob(flats_cleanup_pattern):
-                            Path(path).unlink()
+                    if no_flats_var == True:
+                        self.siril.log("No Master Flat.", s.LogColor.SALMON)
+                    else:
+                        create_master_flat(self, object_path_var, process_temp_path, bias_master, masters_path)
+
+                        if flats_cleanup_var == True:
+                            for path in Path(process_temp_path).rglob(flats_cleanup_pattern):
+                                Path(path).unlink()
                             
                     # Preprocessing light frames                        
                     if drizzle_var == True:
@@ -959,20 +979,31 @@ class RcPreprocessingInterface(QMainWindow):
                         session_bias_master = bias_master[i - 1] if isinstance(bias_master, list) else bias_master
                         session_dark_master = dark_master[i - 1] if isinstance(dark_master, list) else dark_master
                         
+                        flat_calibration = "" if no_flats_var == True else f"-flat={masters_path}/pp_flat_s{i}_stacked -equalize_cfa"
+
                         if session_bias_master == "" and session_dark_master == "":
-                            self.siril.log(f"Calibrate session {i} with: Only Master Flat", s.LogColor.GREEN)
+                            if no_flats_var == True:
+                                self.siril.log(f"Calibrate session {i} without master calibration frames", s.LogColor.GREEN)
+                            else:
+                                self.siril.log(f"Calibrate session {i} with: Only Master Flat", s.LogColor.GREEN)
                             lights_calibration = ""
                         elif session_bias_master != "" and session_dark_master == "":
-                            self.siril.log(f"Calibrate session {i} with: Master Bias and Master Flat", s.LogColor.GREEN)
+                            if no_flats_var == True:
+                                self.siril.log(f"Calibrate session {i} with: Master Bias", s.LogColor.GREEN)
+                            else:
+                                self.siril.log(f"Calibrate session {i} with: Master Bias and Master Flat", s.LogColor.GREEN)
                             lights_calibration = f"-bias={session_bias_master}"
                         else:
-                            self.siril.log(f"Calibrate session {i} with: Master Dark and Master Flat", s.LogColor.GREEN)
+                            if no_flats_var == True:
+                                self.siril.log(f"Calibrate session {i} with: Master Dark", s.LogColor.GREEN)
+                            else:
+                                self.siril.log(f"Calibrate session {i} with: Master Dark and Master Flat", s.LogColor.GREEN)
                             lights_calibration = f"-dark={session_dark_master}"
                         
                         self.siril.cmd("cd", f"{object.joinpath(lights_pattern)}")
                         self.siril.cmd("convert", f"light_s{i} -out={process_temp_path}")
                         self.siril.cmd("cd", f"{process_temp_path}")
-                        self.siril.cmd("calibrate", f"light_s{i} {lights_calibration} -flat={masters_path}/pp_flat_s{i}_stacked -cfa -equalize_cfa {debayer}")
+                        self.siril.cmd("calibrate", f"light_s{i} {lights_calibration} {flat_calibration} -cfa {debayer}")
                         i += 1
                         
                     if lights_cleanup_var == True:

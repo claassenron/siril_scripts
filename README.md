@@ -11,7 +11,7 @@ MULTI SESSION PREPROCESSING IS POSSIBLE.
 1. Choose Object folder.
     Folder structure:
 
-   ../object_folder/session_folder1/flats/
+   ../object_folder/session_folder1/flats/ (optional with No Flats)
 
    ............................./session_folder1/lights/
 
@@ -19,7 +19,7 @@ MULTI SESSION PREPROCESSING IS POSSIBLE.
 
    ............................./session_folder1/darks/ (optional)
    
-   ............................./session_folder2/flats/
+   ............................./session_folder2/flats/ (optional with No Flats)
    
    ............................./session_folder2/lights/
 
@@ -51,11 +51,13 @@ If blank, preprocessing without master bias.
 4. Choose in session darks folder or choose seperately a dark files folder or master dark file.
 If blank, preprocessing without master dark.
 
-5. Option for setting the images bit dept for preprocessing.
+5. Option for preprocessing without flats.
+
+6. Option for setting the images bit dept for preprocessing.
 Master stack always saved in 32 bit.
 
-6. Option for drizzle
+7. Option for drizzle
 
-7. Options for cleaning up processing folders.
+8. Options for cleaning up processing folders.
 
-8. Option for creating only a master bias file and/or master dark file.
+9. Option for creating only a master bias file and/or master dark file.
