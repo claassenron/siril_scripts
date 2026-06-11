@@ -797,6 +797,15 @@ class RcPreprocessingInterface(QMainWindow):
             # Check if paths are selected
             if create_bias_var == True or create_dark_var == True:
                 if (process_path_var in (None, "") or not Path(process_path_var).is_dir()) or (create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir())) or (create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir())):
+                    missing_folders = []
+                    if process_path_var in (None, "") or not Path(process_path_var).is_dir():
+                        missing_folders.append("a valid process folder")
+                    if missing_folders:
+                        QMessageBox.warning(
+                            self,
+                            "Select Required Folder",
+                            "Please select:\n- " + "\n- ".join(missing_folders),
+                        )
                     if (process_path_var in (None, "") or not Path(process_path_var).is_dir()):
                         self.siril.log(
                             "Select process folder.",
@@ -847,7 +856,7 @@ class RcPreprocessingInterface(QMainWindow):
                     self.siril.log(
                         "Select process folder.",
                         s.LogColor.SALMON
-                    )
+                    ) 
                 if (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True):
                     self.siril.log(
                         "Multiple selected! Select bias folder or master bias file or none.",
@@ -857,6 +866,21 @@ class RcPreprocessingInterface(QMainWindow):
                     self.siril.log(
                         "Multiple selected! Select dark folder or master dark file or none.",
                         s.LogColor.SALMON
+                    )  
+                warning_messages = []
+                if object_path_var in (None, "") or not Path(object_path_var).is_dir():
+                    warning_messages.append("Select a valid object folder.")
+                if process_path_var in (None, "") or not Path(process_path_var).is_dir():
+                    warning_messages.append("Select a valid process folder.")
+                if (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True):
+                    warning_messages.append("Select session bias files, bias folder, master bias file or none.")
+                if (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
+                    warning_messages.append("Select session dark files, dark folder, master dark file or none.")
+                if warning_messages:
+                    QMessageBox.warning(
+                        self,
+                        "Check Selections",
+                        "Please correct:\n- " + "\n- ".join(warning_messages),
                     )
                 if not Path(bias_file_var).exists():
                         self.siril.log(
