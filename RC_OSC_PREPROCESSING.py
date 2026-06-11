@@ -797,19 +797,6 @@ class RcPreprocessingInterface(QMainWindow):
             # Check if paths are selected
             if create_bias_var == True or create_dark_var == True:
                 if (process_path_var in (None, "") or not Path(process_path_var).is_dir()) or (create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir())) or (create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir())):
-                    warning_messages = []
-                    if process_path_var in (None, "") or not Path(process_path_var).is_dir():
-                        warning_messages.append("Select a valid process folder.")
-                    if create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir()):
-                        warning_messages.append("Select a valid bias folder.")
-                    if create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir()):
-                        warning_messages.append("Select a valid dark folder.")
-                    if warning_messages:
-                        QMessageBox.warning(
-                            self,
-                            "Check Selections",
-                            "Please correct:\n- " + "\n- ".join(warning_messages),
-                        )
                     if (process_path_var in (None, "") or not Path(process_path_var).is_dir()):
                         self.siril.log(
                             "Select process folder.",
@@ -824,6 +811,19 @@ class RcPreprocessingInterface(QMainWindow):
                         self.siril.log(
                             "Select darks folder.",
                             s.LogColor.SALMON
+                        )
+                    warning_messages = []
+                    if process_path_var in (None, "") or not Path(process_path_var).is_dir():
+                        warning_messages.append("Select a valid process folder.")
+                    if create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir()):
+                        warning_messages.append("Select a valid bias folder.")
+                    if create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir()):
+                        warning_messages.append("Select a valid dark folder.")
+                    if warning_messages:
+                        QMessageBox.warning(
+                            self,
+                            "Check Selections",
+                            "Please correct:\n- " + "\n- ".join(warning_messages),
                         )
                 else:
                     # Create paths
