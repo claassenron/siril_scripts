@@ -247,8 +247,60 @@ def get_session_paths(object_path_var):
         key=lambda path: path.name.lower()
     )
 
+def is_blank(value):
+    return value in (None, "")
+
 def folder_has_files(path):
     return path.is_dir() and any(child.is_file() for child in path.iterdir())
+
+def show_validation_warnings(self, warnings):
+    for warning in warnings:
+        self.siril.log(warning, s.LogColor.SALMON)
+    QMessageBox.warning(
+        self,
+        "Check Selections",
+        "Please correct:\n- " + "\n- ".join(warnings),
+    )
+
+def validate_source_folder(path_var, label):
+    if is_blank(path_var) or not Path(path_var).is_dir():
+        return f"Select a valid {label} folder."
+    if not folder_has_files(Path(path_var)):
+        return f"{label.capitalize()} folder is empty: {path_var}"
+    return None
+
+def validate_create_master_options(process_path_var, bias_path_var, dark_path_var, create_bias_var, create_dark_var):
+    warnings = []
+    if is_blank(process_path_var) or not Path(process_path_var).is_dir():
+        warnings.append("Select a valid process folder.")
+
+    if create_bias_var:
+        bias_warning = validate_source_folder(bias_path_var, "bias")
+        if bias_warning:
+            warnings.append(bias_warning)
+
+    if create_dark_var:
+        dark_warning = validate_source_folder(dark_path_var, "dark")
+        if dark_warning:
+            warnings.append(dark_warning)
+
+    return warnings
+
+def validate_optional_calibration(label, session_selected, folder_path, file_path):
+    warnings = []
+    selection_count = sum((session_selected, folder_path != "", file_path != ""))
+    if selection_count > 1:
+        warnings.append(f"Select session {label} files, {label} folder, master {label} file or none.")
+
+    if folder_path != "":
+        folder_warning = validate_source_folder(folder_path, label)
+        if folder_warning:
+            warnings.append(folder_warning)
+
+    if file_path != "" and not Path(file_path).is_file():
+        warnings.append(f"Select a valid master {label} file: {file_path}")
+
+    return warnings
 
 def validate_session_frame_folders(object_path_var, no_flats_var, bias_session_var, dark_session_var):
     warnings = []
@@ -274,6 +326,53 @@ def validate_session_frame_folders(object_path_var, no_flats_var, bias_session_v
 
     return warnings
 
+def validate_preprocessing_options(
+    object_path_var,
+    process_path_var,
+    no_flats_var,
+    bias_session_var,
+    bias_path_var,
+    bias_file_var,
+    dark_session_var,
+    dark_path_var,
+    dark_file_var
+):
+    warnings = []
+
+    if is_blank(object_path_var) or not Path(object_path_var).is_dir():
+        warnings.append("Select a valid object folder.")
+    if is_blank(process_path_var) or not Path(process_path_var).is_dir():
+        warnings.append("Select a valid process folder.")
+
+    warnings.extend(
+        validate_optional_calibration(
+            "bias",
+            bias_session_var,
+            bias_path_var,
+            bias_file_var
+        )
+    )
+    warnings.extend(
+        validate_optional_calibration(
+            "dark",
+            dark_session_var,
+            dark_path_var,
+            dark_file_var
+        )
+    )
+
+    if not warnings:
+        warnings.extend(
+            validate_session_frame_folders(
+                object_path_var,
+                no_flats_var,
+                bias_session_var,
+                dark_session_var
+            )
+        )
+
+    return warnings
+
 def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(bias_path_var))
     self.siril.cmd("convert", f"bias -out={process_temp_path}")
@@ -285,12 +384,10 @@ def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     self.siril.log(f"FINISHED CREATING MASTER BIAS. ({masters_path}/{bias_master_pattern})", s.LogColor.GREEN)
 
 def create_session_master_bias(self, object_path_var, process_temp_path, masters_path):
-    object_array = get_session_paths(object_path_var)
     bias_masters = []
-    i = 1
-    for object in object_array:
+    for i, session_path in enumerate(get_session_paths(object_path_var), start=1):
         bias_master = Path(masters_path).joinpath(f"{bias_master_pattern}_{i}")
-        self.siril.cmd("cd", f"{object}/{biases_pattern}")
+        self.siril.cmd("cd", f"{session_path}/{biases_pattern}")
         self.siril.cmd("convert", f"bias_s{i} -out={process_temp_path}")
         self.siril.cmd("cd", process_temp_path)
         self.siril.cmd(
@@ -299,9 +396,8 @@ def create_session_master_bias(self, object_path_var, process_temp_path, masters
         self.siril.cmd("cd", masters_path)
         self.siril.log(f"FINISHED CREATING MASTER BIAS. ({bias_master})", s.LogColor.GREEN)
         bias_masters.append(bias_master)
-        i += 1  
     return bias_masters
-       
+
 def create_master_dark(self, dark_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(dark_path_var))
     self.siril.cmd("convert", f"dark -out={process_temp_path}")
@@ -313,12 +409,10 @@ def create_master_dark(self, dark_path_var, process_temp_path, masters_path):
     self.siril.log(f"FINISHED CREATING MASTER DARK. ({masters_path}/{dark_master_pattern})", s.LogColor.GREEN)
 
 def create_session_master_dark(self, object_path_var, process_temp_path, masters_path):
-    object_array = get_session_paths(object_path_var)
     dark_masters = []
-    i = 1
-    for object in object_array:
+    for i, session_path in enumerate(get_session_paths(object_path_var), start=1):
         dark_master = Path(masters_path).joinpath(f"{dark_master_pattern}_{i}")
-        self.siril.cmd("cd", f"{object}/{darks_pattern}")
+        self.siril.cmd("cd", f"{session_path}/{darks_pattern}")
         self.siril.cmd("convert", f"dark_s{i} -out={process_temp_path}")
         self.siril.cmd("cd", process_temp_path)
         self.siril.cmd(
@@ -327,15 +421,12 @@ def create_session_master_dark(self, object_path_var, process_temp_path, masters
         self.siril.cmd("cd", masters_path)
         self.siril.log(f"FINISHED CREATING MASTER DARK. ({dark_master})", s.LogColor.GREEN)
         dark_masters.append(dark_master)
-        i += 1  
     return dark_masters
-    
+
 def create_master_flat(self, object_path_var, process_temp_path, bias_master, masters_path):
-    object_array = get_session_paths(object_path_var)
-    i = 1
-    for object in object_array:
+    for i, session_path in enumerate(get_session_paths(object_path_var), start=1):
         session_bias_master = bias_master[i - 1] if isinstance(bias_master, list) else bias_master
-        self.siril.cmd("cd", f"{object}/{flats_pattern}")
+        self.siril.cmd("cd", f"{session_path}/{flats_pattern}")
         self.siril.cmd("convert", f"flat_s{i} -out={process_temp_path}")
         self.siril.cmd("cd", f"{process_temp_path}")
         if session_bias_master != "":
@@ -344,8 +435,7 @@ def create_master_flat(self, object_path_var, process_temp_path, bias_master, ma
             self.siril.cmd("stack", f"pp_flat_s{i} rej 3 3 -norm=mul -32b -out={masters_path}/pp_flat_s{i}_stacked")
         else:
             self.siril.log(f"No Calibration (No Master Bias)", s.LogColor.GREEN)
-            self.siril.cmd("stack", f"flat_s{i} rej 3 3 -norm=mul -32b -out={masters_path}/pp_flat_s{i}_stacked")  
-        i += 1       
+            self.siril.cmd("stack", f"flat_s{i} rej 3 3 -norm=mul -32b -out={masters_path}/pp_flat_s{i}_stacked")
         self.siril.log("FINISHED CREATING MASTER FLATS.", s.LogColor.GREEN)
 
 class RcPreprocessingInterface(QMainWindow):
@@ -811,118 +901,73 @@ class RcPreprocessingInterface(QMainWindow):
             drizzle_pixfrac_var = self.drizzle_pixfrac_var.currentText()
             drizzle_kernel_var = self.drizzle_kernel_var.currentText()
 
-            if bit_dept_32_var == True:
+            if bit_dept_32_var:
                 set_bit_dept = "set32bits"
             else:
                 set_bit_dept = "set16bits"
                 
-            if drizzle_var == True:
+            if drizzle_var:
                 master_stack = "$OBJECT:%s$_$STACKCNT:%d$x$EXPTIME:%d$sec_G$GAIN:%d$_O$OFFSET:%d$_T$CCD-TEMP:%d$°C_$DATE-OBS:dm12$_drizzle"
             else:
                 master_stack = "$OBJECT:%s$_$STACKCNT:%d$x$EXPTIME:%d$sec_G$GAIN:%d$_O$OFFSET:%d$_T$CCD-TEMP:%d$°C_$DATE-OBS:dm12$"
             
             # Check if paths are selected
-            if create_bias_var == True or create_dark_var == True:
-                warning_messages = []
-                if process_path_var in (None, "") or not Path(process_path_var).is_dir():
-                    warning_messages.append("Select a valid process folder.")
-                if create_bias_var == True:
-                    if bias_path_var in (None, "") or not Path(bias_path_var).is_dir():
-                        warning_messages.append("Select a valid bias folder.")
-                    elif not folder_has_files(Path(bias_path_var)):
-                        warning_messages.append(f"Bias folder is empty: {bias_path_var}")
-                if create_dark_var == True:
-                    if dark_path_var in (None, "") or not Path(dark_path_var).is_dir():
-                        warning_messages.append("Select a valid dark folder.")
-                    elif not folder_has_files(Path(dark_path_var)):
-                        warning_messages.append(f"Dark folder is empty: {dark_path_var}")
-
+            if create_bias_var or create_dark_var:
+                warning_messages = validate_create_master_options(
+                    process_path_var,
+                    bias_path_var,
+                    dark_path_var,
+                    create_bias_var,
+                    create_dark_var
+                )
                 if warning_messages:
-                    for warning_message in warning_messages:
-                        self.siril.log(warning_message, s.LogColor.SALMON)
-                    QMessageBox.warning(
-                        self,
-                        "Check Selections",
-                        "Please correct:\n- " + "\n- ".join(warning_messages),
-                    )
+                    show_validation_warnings(self, warning_messages)
                 else:
                     # Create paths
                     masters_path = Path(process_path_var).joinpath(masters_pattern)
                     masters_path.mkdir(exist_ok=True)
                     process_temp_path = Path(process_path_var).joinpath(process_pattern)
                     process_temp_path.mkdir(exist_ok=True)
-                    
+
                     # Set bitdept
                     self.siril.cmd(f"{set_bit_dept}")
-                    
-                    if create_bias_var == True:
+
+                    if create_bias_var:
                         create_master_bias(self, bias_path_var, process_temp_path, masters_path)
-                    if create_dark_var == True:
+                    if create_dark_var:
                         create_master_dark(self, dark_path_var, process_temp_path, masters_path)
 
                     self.siril.cmd("set32bits")
-                    
-                    if process_cleanup_var == True and (process_temp_path not in (None, "") or Path(process_temp_path).is_dir()):
+
+                    if process_cleanup_var and process_temp_path.is_dir():
                         shutil.rmtree(process_temp_path, ignore_errors=True)
                         self.siril.log(
                             "Successfully cleaned up '%s' folder" % process_temp_path,
                             s.LogColor.GREEN,
                         )
-                        
+
             else:
-                warning_messages = []
-
-                if object_path_var in (None, "") or not Path(object_path_var).is_dir():
-                    warning_messages.append("Select a valid object folder.")
-                if process_path_var in (None, "") or not Path(process_path_var).is_dir():
-                    warning_messages.append("Select a valid process folder.")
-
-                bias_selections = [bias_session_var, bias_path_var != "", bias_file_var != ""]
-                if sum(1 for selected in bias_selections if selected) > 1:
-                    warning_messages.append("Select session bias files, bias folder, master bias file or none.")
-                if bias_path_var != "" and not Path(bias_path_var).is_dir():
-                    warning_messages.append(f"Select a valid bias folder: {bias_path_var}")
-                elif bias_path_var != "" and not folder_has_files(Path(bias_path_var)):
-                    warning_messages.append(f"Bias folder is empty: {bias_path_var}")
-                if bias_file_var != "" and not Path(bias_file_var).is_file():
-                    warning_messages.append(f"Select a valid master bias file: {bias_file_var}")
-
-                dark_selections = [dark_session_var, dark_path_var != "", dark_file_var != ""]
-                if sum(1 for selected in dark_selections if selected) > 1:
-                    warning_messages.append("Select session dark files, dark folder, master dark file or none.")
-                if dark_path_var != "" and not Path(dark_path_var).is_dir():
-                    warning_messages.append(f"Select a valid dark folder: {dark_path_var}")
-                elif dark_path_var != "" and not folder_has_files(Path(dark_path_var)):
-                    warning_messages.append(f"Dark folder is empty: {dark_path_var}")
-                if dark_file_var != "" and not Path(dark_file_var).is_file():
-                    warning_messages.append(f"Select a valid master dark file: {dark_file_var}")
-
-                if not warning_messages:
-                    warning_messages.extend(
-                        validate_session_frame_folders(
-                            object_path_var,
-                            no_flats_var,
-                            bias_session_var,
-                            dark_session_var
-                        )
-                    )
-
+                warning_messages = validate_preprocessing_options(
+                    object_path_var,
+                    process_path_var,
+                    no_flats_var,
+                    bias_session_var,
+                    bias_path_var,
+                    bias_file_var,
+                    dark_session_var,
+                    dark_path_var,
+                    dark_file_var
+                )
                 if warning_messages:
-                    for warning_message in warning_messages:
-                        self.siril.log(warning_message, s.LogColor.SALMON)
-                    QMessageBox.warning(
-                        self,
-                        "Check Selections",
-                        "Please correct:\n- " + "\n- ".join(warning_messages),
-                    )
+                    show_validation_warnings(self, warning_messages)
                 else:
                     self.siril.log("START PREPROCESSING",
                     s.LogColor.GREEN
-                    ) 
+                    )
 
                     # Set bitdept
                     self.siril.cmd(f"{set_bit_dept}")
-                    
+
                     # Create paths
                     masters_path = Path(process_path_var).joinpath(masters_pattern)
                     masters_path.mkdir(exist_ok=True)
@@ -932,9 +977,9 @@ class RcPreprocessingInterface(QMainWindow):
                     all_pp_lights_temp_path = Path(process_path_var).joinpath(all_pp_lights_pattern)
                     all_batch_pp_lights_temp_path = Path(all_pp_lights_temp_path).joinpath(batch_pp_lights_pattern)
                     batch_temp_path = masters_path.joinpath(batch_master_pattern)
-                         
+
                     # Check for bias / dark
-                    if bias_session_var == True:
+                    if bias_session_var:
                         bias_master = create_session_master_bias(self, object_path_var, process_temp_path, masters_path)
                     elif Path(bias_file_var).is_file():
                         bias_master = Path(bias_file_var)
@@ -942,7 +987,7 @@ class RcPreprocessingInterface(QMainWindow):
                         f"Use Master Bias - {bias_master}",
                         s.LogColor.SALMON
                         )
-                    elif bias_path_var in (None, "") or not Path(bias_path_var).is_dir():
+                    elif is_blank(bias_path_var) or not Path(bias_path_var).is_dir():
                         bias_master = ""
                         self.siril.log(
                         "No Master Bias",
@@ -951,13 +996,13 @@ class RcPreprocessingInterface(QMainWindow):
                     else:
                         create_master_bias(self, bias_path_var, process_temp_path, masters_path)
                         bias_master = Path(masters_path).joinpath(bias_master_pattern)
-                        
-                        if bias_cleanup_var == True:
+
+                        if bias_cleanup_var:
                             for path in Path(process_temp_path).rglob(bias_cleanup_pattern):
                                 Path(path).unlink()
                                 print(f"Deleting: {path}")
 
-                    if dark_session_var == True:
+                    if dark_session_var:
                         dark_master = create_session_master_dark(self, object_path_var, process_temp_path, masters_path)
                     elif Path(dark_file_var).is_file():
                         dark_master = Path(dark_file_var)
@@ -965,7 +1010,7 @@ class RcPreprocessingInterface(QMainWindow):
                         f"Use Master Dark. - {dark_master}",
                         s.LogColor.SALMON
                         )
-                    elif dark_path_var in (None, "") or not Path(dark_path_var).is_dir():
+                    elif is_blank(dark_path_var) or not Path(dark_path_var).is_dir():
                         dark_master = ""
                         self.siril.log(
                         "No Master Dark.",
@@ -974,61 +1019,58 @@ class RcPreprocessingInterface(QMainWindow):
                     else:
                         create_master_dark(self, dark_path_var, process_temp_path, masters_path)
                         dark_master = Path(masters_path).joinpath(dark_master_pattern)
-                        
-                        if darks_cleanup_var == True:
+
+                        if darks_cleanup_var:
                             for path in Path(process_temp_path).rglob(darks_cleanup_pattern):
                                 Path(path).unlink()
-            
+
                     # Create flats stack
-                    if no_flats_var == True:
+                    if no_flats_var:
                         self.siril.log("No Master Flat.", s.LogColor.SALMON)
                     else:
                         create_master_flat(self, object_path_var, process_temp_path, bias_master, masters_path)
 
-                        if flats_cleanup_var == True:
+                        if flats_cleanup_var:
                             for path in Path(process_temp_path).rglob(flats_cleanup_pattern):
                                 Path(path).unlink()
-                            
-                    # Preprocessing light frames                        
-                    if drizzle_var == True:
+
+                    # Preprocessing light frames
+                    if drizzle_var:
                         debayer = ""
                     else:
                         debayer = "-debayer"
-                        
-                    object_array = get_session_paths(object_path_var)
-                    i = 1
-                    for object in object_array:        
+
+                    for i, session_path in enumerate(get_session_paths(object_path_var), start=1):
                         session_bias_master = bias_master[i - 1] if isinstance(bias_master, list) else bias_master
                         session_dark_master = dark_master[i - 1] if isinstance(dark_master, list) else dark_master
-                        
-                        flat_calibration = "" if no_flats_var == True else f"-flat={masters_path}/pp_flat_s{i}_stacked -equalize_cfa"
+
+                        flat_calibration = "" if no_flats_var else f"-flat={masters_path}/pp_flat_s{i}_stacked -equalize_cfa"
 
                         if session_bias_master == "" and session_dark_master == "":
-                            if no_flats_var == True:
+                            if no_flats_var:
                                 self.siril.log(f"Calibrate session {i} without master calibration frames", s.LogColor.GREEN)
                             else:
                                 self.siril.log(f"Calibrate session {i} with: Only Master Flat", s.LogColor.GREEN)
                             lights_calibration = ""
                         elif session_bias_master != "" and session_dark_master == "":
-                            if no_flats_var == True:
+                            if no_flats_var:
                                 self.siril.log(f"Calibrate session {i} with: Master Bias", s.LogColor.GREEN)
                             else:
                                 self.siril.log(f"Calibrate session {i} with: Master Bias and Master Flat", s.LogColor.GREEN)
                             lights_calibration = f"-bias={session_bias_master}"
                         else:
-                            if no_flats_var == True:
+                            if no_flats_var:
                                 self.siril.log(f"Calibrate session {i} with: Master Dark", s.LogColor.GREEN)
                             else:
                                 self.siril.log(f"Calibrate session {i} with: Master Dark and Master Flat", s.LogColor.GREEN)
                             lights_calibration = f"-dark={session_dark_master}"
-                        
-                        self.siril.cmd("cd", f"{object.joinpath(lights_pattern)}")
+
+                        self.siril.cmd("cd", f"{session_path.joinpath(lights_pattern)}")
                         self.siril.cmd("convert", f"light_s{i} -out={process_temp_path}")
                         self.siril.cmd("cd", f"{process_temp_path}")
                         self.siril.cmd("calibrate", f"light_s{i} {lights_calibration} {flat_calibration} -cfa {debayer}")
-                        i += 1
                         
-                    if lights_cleanup_var == True:
+                    if lights_cleanup_var:
                         for path in Path(process_temp_path).rglob(lights_cleanup_pattern):
                             Path(path).unlink()
                     
@@ -1061,7 +1103,7 @@ class RcPreprocessingInterface(QMainWindow):
                         self.siril.cmd("convert", f"all_light -out={process_temp_path}")
                         self.siril.cmd("cd", f"{process_temp_path}")
                         self.siril.cmd("register", "all_light")
-                        if drizzle_var == True:
+                        if drizzle_var:
                             self.siril.cmd("seqapplyreg", f"all_light -drizzle -scale={drizzle_scale_var} -pixfrac={drizzle_pixfrac_var} -kernel={drizzle_kernel_var}")    
                         self.siril.cmd("stack", f"r_all_light rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={masters_path}/{master_stack}")
                         
@@ -1095,18 +1137,15 @@ class RcPreprocessingInterface(QMainWindow):
                         # CREATE MASTER STACK       
                         self.siril.log("Creating master_stack", s.LogColor.GREEN)
                         
-                        all_pp_lights_array = Path(all_pp_lights_temp_path).iterdir()
-                        i = 1
-                        for all_pp_lights in all_pp_lights_array:
+                        for i, all_pp_lights in enumerate(Path(all_pp_lights_temp_path).iterdir(), start=1):
                             self.siril.log(f"Batch: {all_pp_lights}", s.LogColor.GREEN)
                             self.siril.cmd("cd", all_pp_lights)
                             self.siril.cmd("convert", f"all_light_{i} -out={process_temp_path}")
                             self.siril.cmd("cd", process_temp_path)
                             self.siril.cmd("register", f"all_light_{i}")
-                            if drizzle_var == True:
-                                self.siril.cmd("seqapplyreg", f"all_light_{i} -drizzle -scale={drizzle_scale_var} -pixfrac={drizzle_pixfrac_var} -kernel={drizzle_kernel_var}")    
+                            if drizzle_var:
+                                self.siril.cmd("seqapplyreg", f"all_light_{i} -drizzle -scale={drizzle_scale_var} -pixfrac={drizzle_pixfrac_var} -kernel={drizzle_kernel_var}")
                             self.siril.cmd("stack", f"r_all_light_{i} rej 3 3 -norm=addscale -output_norm -rgb_equal -32b -out={batch_temp_path}/batch_light_all_{i}")
-                            i += 1
                             
                         self.siril.cmd("cd", batch_temp_path)
                         self.siril.cmd("convert", f"batch_all_light -out={process_temp_path}")
@@ -1122,14 +1161,14 @@ class RcPreprocessingInterface(QMainWindow):
                         
                         self.siril.log("FINISHED OSC PREPROCESSING.", s.LogColor.GREEN)
                         
-                    if all_pp_lights_cleanup_var == True:
+                    if all_pp_lights_cleanup_var:
                         shutil.rmtree(all_pp_lights_temp_path, ignore_errors=True)
                         self.siril.log(
                             "Successfully cleaned up '%s' folder" % all_pp_lights_temp_path,
                             s.LogColor.GREEN,
                         )    
                     
-                    if process_cleanup_var == True:
+                    if process_cleanup_var:
                         shutil.rmtree(process_temp_path, ignore_errors=True)
                         self.siril.log(
                             "Successfully cleaned up '%s' folder" % process_temp_path,
