@@ -543,14 +543,8 @@ class RcPreprocessingInterface(QMainWindow):
         bias_layout = QVBoxLayout()
         bias_group.setLayout(bias_layout)
         
-        # Bias session files
-        self.bias_session_var = QCheckBox("Use bias session files (biases folder in each session)", self)
-        self.bias_session_var.setChecked(False)
-        
-        bias_layout.addWidget(self.bias_session_var)
-        
         # Bias path group
-        bias_path_group = QGroupBox()
+        bias_path_group = QGroupBox("Use bias path")
         bias_path_layout = QHBoxLayout()
         bias_path_group.setLayout(bias_path_layout)
         
@@ -569,7 +563,7 @@ class RcPreprocessingInterface(QMainWindow):
         bias_layout.addWidget(bias_path_group)
         
         # Bias file group
-        bias_file_group = QGroupBox()
+        bias_file_group = QGroupBox("Use master bias file")
         bias_file_layout = QHBoxLayout()
         bias_file_group.setLayout(bias_file_layout)
         
@@ -586,6 +580,18 @@ class RcPreprocessingInterface(QMainWindow):
         bias_file_layout.addWidget(bias_file_button)
         
         bias_layout.addWidget(bias_file_group)
+        
+        # Bias session files
+        bias_session_group = QGroupBox("Use bias session files")
+        bias_session_layout = QHBoxLayout()
+        bias_session_group.setLayout(bias_session_layout)
+        
+        self.bias_session_var = QCheckBox("Biases folder in each session", self)
+        self.bias_session_var.setChecked(False)
+        
+        bias_session_layout.addWidget(self.bias_session_var)
+        
+        bias_layout.addWidget(bias_session_group)
        
         container_child_1_layout.addWidget(bias_group)
 
@@ -594,14 +600,8 @@ class RcPreprocessingInterface(QMainWindow):
         dark_layout = QVBoxLayout()
         dark_group.setLayout(dark_layout)
         
-        # Dark session files
-        self.dark_session_var = QCheckBox("Use dark session files (darks folder in each session)", self)
-        self.dark_session_var.setChecked(False)
-        
-        dark_layout.addWidget(self.dark_session_var)
-        
         # Dark path group
-        dark_path_group = QGroupBox()
+        dark_path_group = QGroupBox("Use dark path")
         dark_path_layout = QHBoxLayout()
         dark_path_group.setLayout(dark_path_layout)
         
@@ -620,7 +620,7 @@ class RcPreprocessingInterface(QMainWindow):
         dark_layout.addWidget(dark_path_group)
         
         # Dark file group
-        dark_file_group = QGroupBox()
+        dark_file_group = QGroupBox("Use master dark file")
         dark_file_layout = QHBoxLayout()
         dark_file_group.setLayout(dark_file_layout)
         
@@ -637,6 +637,18 @@ class RcPreprocessingInterface(QMainWindow):
         dark_file_layout.addWidget(dark_file_button)
         
         dark_layout.addWidget(dark_file_group)
+        
+        # Dark session files
+        dark_session_group = QGroupBox("Use dark session files")
+        dark_session_layout = QHBoxLayout()
+        dark_session_group.setLayout(dark_session_layout)
+        
+        self.dark_session_var = QCheckBox("Darks folder in each session", self)
+        self.dark_session_var.setChecked(False)
+        
+        dark_session_layout.addWidget(self.dark_session_var)
+        
+        dark_layout.addWidget(dark_session_group)
 
         container_child_1_layout.addWidget(dark_group)
 
