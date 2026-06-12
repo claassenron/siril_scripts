@@ -247,6 +247,33 @@ def get_session_paths(object_path_var):
         key=lambda path: path.name.lower()
     )
 
+def folder_has_files(path):
+    return path.is_dir() and any(child.is_file() for child in path.iterdir())
+
+def validate_session_frame_folders(object_path_var, no_flats_var, bias_session_var, dark_session_var):
+    warnings = []
+    sessions = get_session_paths(object_path_var)
+    if not sessions:
+        return ["Object folder contains no session folders."]
+
+    required_folders = [(lights_pattern, "lights")]
+    if not no_flats_var:
+        required_folders.append((flats_pattern, "flats"))
+    if bias_session_var:
+        required_folders.append((biases_pattern, "biases"))
+    if dark_session_var:
+        required_folders.append((darks_pattern, "darks"))
+
+    for session_path in sessions:
+        for folder_name, label in required_folders:
+            frame_path = session_path.joinpath(folder_name)
+            if not frame_path.is_dir():
+                warnings.append(f"No {label} folder in: {session_path}")
+            elif not folder_has_files(frame_path):
+                warnings.append(f"{label.capitalize()} folder is empty: {frame_path}")
+
+    return warnings
+
 def create_master_bias(self, bias_path_var, process_temp_path, masters_path):
     self.siril.cmd("cd", Path(bias_path_var))
     self.siril.cmd("convert", f"bias -out={process_temp_path}")
@@ -761,14 +788,14 @@ class RcPreprocessingInterface(QMainWindow):
         
     def run_apply(self):
         try:
-            object_path_var = self.object_path_var.text()
-            process_path_var = self.process_path_var.text()
+            object_path_var = self.object_path_var.text().strip()
+            process_path_var = self.process_path_var.text().strip()
             bias_session_var = self.bias_session_var.isChecked()
-            bias_path_var = self.bias_path_var.text()
-            bias_file_var = self.bias_file_var.text()
+            bias_path_var = self.bias_path_var.text().strip()
+            bias_file_var = self.bias_file_var.text().strip()
             dark_session_var = self.dark_session_var.isChecked()
-            dark_path_var = self.dark_path_var.text()
-            dark_file_var = self.dark_file_var.text()
+            dark_path_var = self.dark_path_var.text().strip()
+            dark_file_var = self.dark_file_var.text().strip()
             no_flats_var = self.no_flats_var.isChecked()
             process_cleanup_var = self.process_cleanup_var.isChecked()
             all_pp_lights_cleanup_var = self.all_pp_lights_cleanup_var.isChecked()
@@ -796,35 +823,28 @@ class RcPreprocessingInterface(QMainWindow):
             
             # Check if paths are selected
             if create_bias_var == True or create_dark_var == True:
-                if (process_path_var in (None, "") or not Path(process_path_var).is_dir()) or (create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir())) or (create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir())):
-                    if (process_path_var in (None, "") or not Path(process_path_var).is_dir()):
-                        self.siril.log(
-                            "Select process folder.",
-                            s.LogColor.SALMON
-                        )
-                    if create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir()):
-                        self.siril.log(
-                            "Select bias folder.",
-                            s.LogColor.SALMON
-                        )         
-                    if create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir()):
-                        self.siril.log(
-                            "Select darks folder.",
-                            s.LogColor.SALMON
-                        )
-                    warning_messages = []
-                    if process_path_var in (None, "") or not Path(process_path_var).is_dir():
-                        warning_messages.append("Select a valid process folder.")
-                    if create_bias_var == True and (bias_path_var in (None, "") or not Path(bias_path_var).is_dir()):
+                warning_messages = []
+                if process_path_var in (None, "") or not Path(process_path_var).is_dir():
+                    warning_messages.append("Select a valid process folder.")
+                if create_bias_var == True:
+                    if bias_path_var in (None, "") or not Path(bias_path_var).is_dir():
                         warning_messages.append("Select a valid bias folder.")
-                    if create_dark_var == True and (dark_path_var in (None, "") or not Path(dark_path_var).is_dir()):
+                    elif not folder_has_files(Path(bias_path_var)):
+                        warning_messages.append(f"Bias folder is empty: {bias_path_var}")
+                if create_dark_var == True:
+                    if dark_path_var in (None, "") or not Path(dark_path_var).is_dir():
                         warning_messages.append("Select a valid dark folder.")
-                    if warning_messages:
-                        QMessageBox.warning(
-                            self,
-                            "Check Selections",
-                            "Please correct:\n- " + "\n- ".join(warning_messages),
-                        )
+                    elif not folder_has_files(Path(dark_path_var)):
+                        warning_messages.append(f"Dark folder is empty: {dark_path_var}")
+
+                if warning_messages:
+                    for warning_message in warning_messages:
+                        self.siril.log(warning_message, s.LogColor.SALMON)
+                    QMessageBox.warning(
+                        self,
+                        "Check Selections",
+                        "Please correct:\n- " + "\n- ".join(warning_messages),
+                    )
                 else:
                     # Create paths
                     masters_path = Path(process_path_var).joinpath(masters_pattern)
@@ -849,77 +869,48 @@ class RcPreprocessingInterface(QMainWindow):
                             s.LogColor.GREEN,
                         )
                         
-            # Check if paths are selected           
-            elif ((object_path_var in (None, "") or not Path(object_path_var).is_dir()) or (process_path_var in (None, "") or not Path(process_path_var).is_dir())) or (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (not Path(bias_file_var).exists() or not Path(dark_file_var).exists())or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True)or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
-                if object_path_var in (None, "") or not Path(object_path_var).is_dir():
-                    self.siril.log(
-                        "Select object folder.",
-                        s.LogColor.SALMON
-                    )
-                if (process_path_var in (None, "") or not Path(process_path_var).is_dir()):
-                    self.siril.log(
-                        "Select process folder.",
-                        s.LogColor.SALMON
-                    ) 
-                if (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True):
-                    self.siril.log(
-                        "Multiple selected! Select bias folder or master bias file or none.",
-                        s.LogColor.SALMON
-                    )
-                if (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
-                    self.siril.log(
-                        "Multiple selected! Select dark folder or master dark file or none.",
-                        s.LogColor.SALMON
-                    )  
+            else:
                 warning_messages = []
+
                 if object_path_var in (None, "") or not Path(object_path_var).is_dir():
                     warning_messages.append("Select a valid object folder.")
                 if process_path_var in (None, "") or not Path(process_path_var).is_dir():
                     warning_messages.append("Select a valid process folder.")
-                if (bias_path_var not in (None, "") and bias_file_var not in (None, "")) or (bias_path_var not in (None, "") and bias_session_var == True) or (bias_file_var not in (None, "") and bias_session_var == True):
+
+                bias_selections = [bias_session_var, bias_path_var != "", bias_file_var != ""]
+                if sum(1 for selected in bias_selections if selected) > 1:
                     warning_messages.append("Select session bias files, bias folder, master bias file or none.")
-                if (dark_path_var not in (None, "") and dark_file_var not in (None, "")) or (dark_path_var not in (None, "") and dark_session_var == True) or (dark_file_var not in (None, "") and dark_session_var == True):
+                if bias_path_var != "" and not Path(bias_path_var).is_dir():
+                    warning_messages.append(f"Select a valid bias folder: {bias_path_var}")
+                if bias_file_var != "" and not Path(bias_file_var).is_file():
+                    warning_messages.append(f"Select a valid master bias file: {bias_file_var}")
+
+                dark_selections = [dark_session_var, dark_path_var != "", dark_file_var != ""]
+                if sum(1 for selected in dark_selections if selected) > 1:
                     warning_messages.append("Select session dark files, dark folder, master dark file or none.")
+                if dark_path_var != "" and not Path(dark_path_var).is_dir():
+                    warning_messages.append(f"Select a valid dark folder: {dark_path_var}")
+                if dark_file_var != "" and not Path(dark_file_var).is_file():
+                    warning_messages.append(f"Select a valid master dark file: {dark_file_var}")
+
+                if not warning_messages:
+                    warning_messages.extend(
+                        validate_session_frame_folders(
+                            object_path_var,
+                            no_flats_var,
+                            bias_session_var,
+                            dark_session_var
+                        )
+                    )
+
                 if warning_messages:
+                    for warning_message in warning_messages:
+                        self.siril.log(warning_message, s.LogColor.SALMON)
                     QMessageBox.warning(
                         self,
                         "Check Selections",
                         "Please correct:\n- " + "\n- ".join(warning_messages),
                     )
-                if not Path(bias_file_var).exists():
-                        self.siril.log(
-                        f"Master bias file does not exist. - {bias_file_var}",
-                        s.LogColor.SALMON
-                        )
-                if not Path(dark_file_var).exists():
-                        self.siril.log(
-                        f"Master dark file does not exist. - {dark_file_var}",
-                        s.LogColor.SALMON
-                        )    
-            else: 
-                # Check if flats / lights path / files exists
-                for object in sorted(Path(object_path_var).glob("*")):
-                    if no_flats_var == False:
-                        if not Path(object.joinpath(flats_pattern)).exists():
-                            self.siril.log(f"No flats folder in: {Path(object)}",
-                            s.LogColor.RED
-                            )
-                            break
-                        if not any(Path(object.joinpath(flats_pattern)).iterdir()):
-                            self.siril.log(f"File path empty: {Path(object.joinpath(flats_pattern))}",
-                            s.LogColor.RED
-                            )
-                            break
-                    if not Path(object.joinpath(lights_pattern)).exists():
-                        self.siril.log(f"No lights folder in: {Path(object)}",
-                        s.LogColor.RED
-                        )
-                        break
-                    if not any(Path(object.joinpath(lights_pattern)).iterdir()):
-                        self.siril.log(f"File path empty: {Path(object.joinpath(lights_pattern))}",
-                        s.LogColor.RED
-                        )
-                        break
                 else:
                     self.siril.log("START PREPROCESSING",
                     s.LogColor.GREEN
@@ -937,8 +928,7 @@ class RcPreprocessingInterface(QMainWindow):
                     all_pp_lights_temp_path = Path(process_path_var).joinpath(all_pp_lights_pattern)
                     all_batch_pp_lights_temp_path = Path(all_pp_lights_temp_path).joinpath(batch_pp_lights_pattern)
                     batch_temp_path = masters_path.joinpath(batch_master_pattern)
-                    
-                          
+                         
                     # Check for bias / dark
                     if bias_session_var == True:
                         bias_master = create_session_master_bias(self, object_path_var, process_temp_path, masters_path)
