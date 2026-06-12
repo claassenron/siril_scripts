@@ -882,6 +882,8 @@ class RcPreprocessingInterface(QMainWindow):
                     warning_messages.append("Select session bias files, bias folder, master bias file or none.")
                 if bias_path_var != "" and not Path(bias_path_var).is_dir():
                     warning_messages.append(f"Select a valid bias folder: {bias_path_var}")
+                elif bias_path_var != "" and not folder_has_files(Path(bias_path_var)):
+                    warning_messages.append(f"Bias folder is empty: {bias_path_var}")
                 if bias_file_var != "" and not Path(bias_file_var).is_file():
                     warning_messages.append(f"Select a valid master bias file: {bias_file_var}")
 
@@ -890,6 +892,8 @@ class RcPreprocessingInterface(QMainWindow):
                     warning_messages.append("Select session dark files, dark folder, master dark file or none.")
                 if dark_path_var != "" and not Path(dark_path_var).is_dir():
                     warning_messages.append(f"Select a valid dark folder: {dark_path_var}")
+                elif dark_path_var != "" and not folder_has_files(Path(dark_path_var)):
+                    warning_messages.append(f"Dark folder is empty: {dark_path_var}")
                 if dark_file_var != "" and not Path(dark_file_var).is_file():
                     warning_messages.append(f"Select a valid master dark file: {dark_file_var}")
 
