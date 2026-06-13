@@ -231,7 +231,7 @@ pp_lights_pattern = "pp_light_s*.fit"
 bias_cleanup_pattern = "*bias*"
 darks_cleanup_pattern = "*dark*"
 flats_cleanup_pattern = "*flat*"
-lights_cleanup_pattern = "light_s*"
+lights_cleanup_pattern = "light_s[0-9]*"
 masters_pattern = "masters"
 process_pattern = "process"
 bias_master_pattern = "bias_master"
@@ -715,19 +715,23 @@ class RcPreprocessingInterface(QMainWindow):
         # Checkbox set drizzle
         self.drizzle_var = QCheckBox("Drizzle", self)
         self.drizzle_var.setChecked(False)
-        
+        self.drizzle_var.toggled.connect(self._set_drizzle_options_enabled)
+
         drizzle_scale_label = QLabel("Scale")
         self.drizzle_scale_var = QComboBox()
         self.drizzle_scale_var.addItems(["1.0", "1.5","2.0", "2.5", "3.0"])
-        
+        self.drizzle_scale_var.setEditable(True)
+
         drizzle_pixfrac_label = QLabel("Pixel fraction")
         self.drizzle_pixfrac_var = QComboBox()
         self.drizzle_pixfrac_var.addItems(["0.5", "0.55", "0.6", "0.65", "0.7", "0.75", "0.8", "0.85", "0.9", "0.95", "1.0"])
-        
+        self.drizzle_pixfrac_var.setEditable(True)
+
         drizzle_kernel_label = QLabel("Kernel")
         self.drizzle_kernel_var = QComboBox()
         self.drizzle_kernel_var.addItems(["square", "point", "turbo", "gaussian", "Lanczos2", "Lanczos3"])
-        
+        self._set_drizzle_options_enabled(self.drizzle_var.isChecked())
+
         drizzle_layout.addWidget(self.drizzle_var)
         drizzle_layout.addWidget(drizzle_scale_label)
         drizzle_layout.addWidget(self.drizzle_scale_var)
@@ -828,8 +832,13 @@ class RcPreprocessingInterface(QMainWindow):
     def _dark_browse_file(self):
         file_name, ok = QFileDialog.getOpenFileName(self, "Select dark file")
         if file_name:
-            self.dark_file_var.setText(str(Path(file_name)))      
-            
+            self.dark_file_var.setText(str(Path(file_name)))
+
+    def _set_drizzle_options_enabled(self, enabled):
+        self.drizzle_scale_var.setEnabled(enabled)
+        self.drizzle_pixfrac_var.setEnabled(enabled)
+        self.drizzle_kernel_var.setEnabled(enabled)
+
     def help_messagebox(self):
         help_messagebox = (
             f"{TITLE}""    v"f"{VERSION}\n\n"
