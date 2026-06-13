@@ -1,6 +1,6 @@
 OSC PREPROCESSING SCRIPT FOR SIRIL 1.4.2
 
-<img width="1102" height="1069" alt="Schermafbeelding 2026-06-13 134532" src="https://github.com/user-attachments/assets/94dc7d94-c139-455e-acb1-41fa5be318e5" />
+<img width="1108" height="1069" alt="Schermafbeelding 2026-06-13 145107" src="https://github.com/user-attachments/assets/4cdeb22f-6eca-4d87-ae64-104818775d94" />
 
 THIS SCRIPT DOES NOT MOVE OR MAKES CHANGES TO ANY OF THE SOURCE FILES
 
