@@ -1,4 +1,3 @@
-
 OSC PREPROCESSING SCRIPT FOR SIRIL 1.4.2
 
 <img width="1102" height="1069" alt="Schermafbeelding 2026-06-13 134532" src="https://github.com/user-attachments/assets/94dc7d94-c139-455e-acb1-41fa5be318e5" />
