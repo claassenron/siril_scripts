@@ -7,6 +7,7 @@ THIS SCRIPT DOES NOT MOVE OR MAKES CHANGES TO ANY OF THE SOURCE FILES
 MULTI SESSION PREPROCESSING IS POSSIBLE.
 
 1. Choose Object folder.
+
     Folder structure:
 
    ../object_folder/session_folder1/flats/ (optional with No Flats)
