@@ -537,6 +537,10 @@ class RcPreprocessingInterface(QMainWindow):
         object_path_button = QPushButton("Browse")
         object_path_button.clicked.connect(self._object_browse_path)
         object_layout.addWidget(object_path_button)
+
+        object_path_clear_button = QPushButton("Clear")
+        object_path_clear_button.clicked.connect(self.object_path_var.clear)
+        object_layout.addWidget(object_path_clear_button)
         
         container_child_1_layout.addWidget(object_group)
         
@@ -556,6 +560,10 @@ class RcPreprocessingInterface(QMainWindow):
         process_path_button = QPushButton("Browse")
         process_path_button.clicked.connect(self._process_browse_path)
         process_layout.addWidget(process_path_button)
+
+        process_path_clear_button = QPushButton("Clear")
+        process_path_clear_button.clicked.connect(self.process_path_var.clear)
+        process_layout.addWidget(process_path_clear_button)
         
         container_child_1_layout.addWidget(process_group)
         
@@ -580,6 +588,10 @@ class RcPreprocessingInterface(QMainWindow):
         bias_path_button = QPushButton("Browse")
         bias_path_button.clicked.connect(self._bias_browse_path)
         bias_path_layout.addWidget(bias_path_button)
+
+        bias_path_clear_button = QPushButton("Clear")
+        bias_path_clear_button.clicked.connect(self.bias_path_var.clear)
+        bias_path_layout.addWidget(bias_path_clear_button)
         
         bias_layout.addWidget(bias_path_group)
         
@@ -599,6 +611,10 @@ class RcPreprocessingInterface(QMainWindow):
         bias_file_button = QPushButton("Browse")
         bias_file_button.clicked.connect(self._bias_browse_file)
         bias_file_layout.addWidget(bias_file_button)
+
+        bias_file_clear_button = QPushButton("Clear")
+        bias_file_clear_button.clicked.connect(self.bias_file_var.clear)
+        bias_file_layout.addWidget(bias_file_clear_button)
         
         bias_layout.addWidget(bias_file_group)
         
@@ -637,6 +653,10 @@ class RcPreprocessingInterface(QMainWindow):
         dark_path_button = QPushButton("Browse")
         dark_path_button.clicked.connect(self._dark_browse_path)
         dark_path_layout.addWidget(dark_path_button)
+
+        dark_path_clear_button = QPushButton("Clear")
+        dark_path_clear_button.clicked.connect(self.dark_path_var.clear)
+        dark_path_layout.addWidget(dark_path_clear_button)
         
         dark_layout.addWidget(dark_path_group)
         
@@ -656,6 +676,10 @@ class RcPreprocessingInterface(QMainWindow):
         dark_file_button = QPushButton("Browse")
         dark_file_button.clicked.connect(self._dark_browse_file)
         dark_file_layout.addWidget(dark_file_button)
+
+        dark_file_clear_button = QPushButton("Clear")
+        dark_file_clear_button.clicked.connect(self.dark_file_var.clear)
+        dark_file_layout.addWidget(dark_file_clear_button)
         
         dark_layout.addWidget(dark_file_group)
         
