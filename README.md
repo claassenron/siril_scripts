@@ -11,6 +11,7 @@ MULTI SESSION PREPROCESSING IS POSSIBLE.
     Folder structure:
 
    ../object_folder/session_folder1/flats/ (optional with No Flats)
+   
    ............................./session_folder1/lights/
 
    ............................./session_folder1/biases/ (optional)
