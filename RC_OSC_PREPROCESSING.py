@@ -786,7 +786,7 @@ class RcPreprocessingInterface(QMainWindow):
         
         container_child_2_layout.addWidget(cleanup_after_group)
         
-         # Only Bias and Darks
+        # Only Bias and Darks
         bias_darks_group = QGroupBox("Create Only Master Bias and/or Master Dark")
         bias_darks_layout = QVBoxLayout()
         bias_darks_group.setLayout(bias_darks_layout)
