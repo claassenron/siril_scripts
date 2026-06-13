@@ -484,8 +484,29 @@ class RcPreprocessingInterface(QMainWindow):
         title_label = QLabel(f"{TITLE} - v{VERSION}")
         title_label.setObjectName("titleLabel")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
-        
+
+        # 1 Buttons
+        button_layout = QHBoxLayout()
+        help_button = QPushButton("Help")
+        help_button.clicked.connect(self.help_messagebox)
+        button_layout.addWidget(help_button)
+
+        button_layout.addStretch()
+        button_layout.addWidget(title_label)
+        button_layout.addStretch()
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.run_close)
+        button_layout.addWidget(close_button)
+
+        submit_button = QPushButton("Apply")
+        submit_button.setObjectName("applyButton")
+        submit_button.clicked.connect(self.run_apply)
+        #submit_button.clicked.connect(self.run_test)
+        button_layout.addWidget(submit_button)
+
+        layout.addLayout(button_layout)
+
         # 1 base_container_h
         #container_group = QGroupBox()
         container_layout = QHBoxLayout()
@@ -778,26 +799,6 @@ class RcPreprocessingInterface(QMainWindow):
         bias_darks_layout.addWidget(self.create_dark_var)
         
         container_child_2_layout.addWidget(bias_darks_group)
-        
-        # 1 Buttons
-        button_layout = QHBoxLayout()
-        help_button = QPushButton("Help")
-        help_button.clicked.connect(self.help_messagebox)
-        button_layout.addWidget(help_button)
-
-        button_layout.addStretch()
-
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.run_close)
-        button_layout.addWidget(close_button)
-
-        submit_button = QPushButton("Apply")
-        submit_button.setObjectName("applyButton")
-        submit_button.clicked.connect(self.run_apply)
-        #submit_button.clicked.connect(self.run_test)
-        button_layout.addWidget(submit_button)
-
-        layout.addLayout(button_layout)
     
     def _object_browse_path(self):
         path_name = QFileDialog.getExistingDirectory(self, "Select object path")
