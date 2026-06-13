@@ -573,7 +573,7 @@ class RcPreprocessingInterface(QMainWindow):
         bias_path_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bias_path_layout.addWidget(bias_path_label)
         
-        #self.bias_path_var = QLineEdit("E:/CALIBRATION_FRAMES/POSEIDON_C_PRO/BIASES_-10.00C_G125_O50")
+        #self.bias_path_var = QLineEdit("E:\_CALIBRATION_FRAMES\POSEIDON_C_PRO_REDUCER/BIASES_-10.00C_G125_O30")
         self.bias_path_var = QLineEdit()
         bias_path_layout.addWidget(self.bias_path_var)
         
@@ -592,7 +592,7 @@ class RcPreprocessingInterface(QMainWindow):
         bias_file_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bias_file_layout.addWidget(bias_file_label)
         
-        #self.bias_file_var = QLineEdit("E:/CALIBRATION_FRAMES/POSEIDON_C_PRO/MASTER_BIAS_50FR_-10.00C_G125_O50.fit")
+        #self.bias_file_var = QLineEdit("E:\_CALIBRATION_FRAMES\POSEIDON_C_PRO_REDUCER/MASTER_BIAS_1000FR_-10.00C_G125_O30.fit")
         self.bias_file_var = QLineEdit()
         bias_file_layout.addWidget(self.bias_file_var)
         
@@ -630,7 +630,7 @@ class RcPreprocessingInterface(QMainWindow):
         dark_path_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         dark_path_layout.addWidget(dark_path_label)
         
-        #self.dark_path_var = QLineEdit("E:/CALIBRATION_FRAMES/POSEIDON_C_PRO/DARKS_60s_-10.00C_G125_O50")
+        #self.dark_path_var = QLineEdit("E:\_CALIBRATION_FRAMES\POSEIDON_C_PRO_REDUCER/DARKS_60s_-10.00C_G125_O30")
         self.dark_path_var = QLineEdit()
         dark_path_layout.addWidget(self.dark_path_var)
         
@@ -649,7 +649,7 @@ class RcPreprocessingInterface(QMainWindow):
         dark_file_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         dark_file_layout.addWidget(dark_file_label)
         
-        #self.dark_file_var = QLineEdit("E:/CALIBRATION_FRAMES/POSEIDON_C_PRO/MASTER_DARK_50FR_60s_-10.00C_G125_O50.fit")
+        #self.dark_file_var = QLineEdit("E:\_CALIBRATION_FRAMES\POSEIDON_C_PRO_REDUCER/MASTER_DARK_100FR_60s_-10.00C_G125_O30.fit")
         self.dark_file_var = QLineEdit()
         dark_file_layout.addWidget(self.dark_file_var)
         
