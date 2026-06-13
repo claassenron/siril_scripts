@@ -724,7 +724,7 @@ class RcPreprocessingInterface(QMainWindow):
 
         drizzle_pixfrac_label = QLabel("Pixel fraction")
         self.drizzle_pixfrac_var = QComboBox()
-        self.drizzle_pixfrac_var.addItems(["0.5", "0.55", "0.6", "0.65", "0.7", "0.75", "0.8", "0.85", "0.9", "0.95", "1.0"])
+        self.drizzle_pixfrac_var.addItems(["1.0", "0.95", "0.9", "0.85", "0.8", "0.75", "0.7", "0.65", "0.6", "0.55", "0.5"])
         self.drizzle_pixfrac_var.setEditable(True)
 
         drizzle_kernel_label = QLabel("Kernel")
