@@ -1,6 +1,6 @@
 OSC PREPROCESSING SCRIPT FOR SIRIL 1.4.2
 
-<img width="1108" height="1069" alt="Schermafbeelding 2026-06-13 145107" src="https://github.com/user-attachments/assets/4cdeb22f-6eca-4d87-ae64-104818775d94" />
+<img width="1102" height="1073" alt="Schermafbeelding 2026-06-13 151507" src="https://github.com/user-attachments/assets/0c72cd14-aece-44cc-a3f2-04602f5a13fa" />
 
 THIS SCRIPT DOES NOT MOVE OR MAKES CHANGES TO ANY OF THE SOURCE FILES
 
@@ -10,7 +10,6 @@ MULTI SESSION PREPROCESSING IS POSSIBLE.
     Folder structure:
 
    ../object_folder/session_folder1/flats/ (optional with No Flats)
-
    ............................./session_folder1/lights/
 
    ............................./session_folder1/biases/ (optional)
